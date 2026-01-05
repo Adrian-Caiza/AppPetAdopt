@@ -120,7 +120,7 @@ class WelcomePage extends StatelessWidget {
                   height: 56,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      context.read<AuthBloc>().add(const SignOutRequested());
+                      context.read<AuthBloc>().add(SignOutRequested());
                     },
                     icon: const Icon(Icons.logout_rounded),
                     label: const Text('Cerrar sesión'),

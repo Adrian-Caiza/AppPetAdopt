@@ -21,6 +21,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
+  // Variable para el rol (Por defecto Adoptante)
+  String _selectedRole = 'adopter'; 
 
   @override
   void dispose() {
@@ -38,6 +41,7 @@ class _RegisterPageState extends State<RegisterPage> {
               email: _emailController.text.trim(),
               password: _passwordController.text,
               displayName: _nameController.text.trim(),
+              role: _selectedRole, // Enviamos el rol seleccionado
             ),
           );
     }
@@ -46,6 +50,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Crear Cuenta')),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -56,7 +61,6 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             );
           } else if (state is EmailVerificationRequired) {
-            // Mostrar pantalla de verificación de email
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (_) => EmailVerificationSentPage(email: state.email),
@@ -71,148 +75,125 @@ class _RegisterPageState extends State<RegisterPage> {
           }
         },
         builder: (context, state) {
-          final isLoading = state is AuthLoading;
-
           return LoadingOverlay(
-            isLoading: isLoading,
-            child: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+            isLoading: state is AuthLoading,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      '¿Quién eres?',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Selector de Roles (Card selection)
+                    Row(
                       children: [
-                        // Back button
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => Navigator.of(context).pop(),
+                        Expanded(
+                          child: _buildRoleCard(
+                            'Adoptante', 
+                            'adopter', 
+                            Icons.home_rounded,
+                            Colors.orange
                           ),
                         ),
-                        const SizedBox(height: 16),
-
-                        // Logo o icono
-                        Icon(
-                          Icons.person_add_rounded,
-                          size: 80,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Título
-                        Text(
-                          'Crear cuenta',
-                          style: Theme.of(context).textTheme.displayMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Regístrate para comenzar',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 48),
-
-                        // Name field
-                        CustomTextField(
-                          controller: _nameController,
-                          label: 'Nombre completo',
-                          hint: 'Juan Pérez',
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa tu nombre';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Email field
-                        CustomTextField(
-                          controller: _emailController,
-                          label: 'Correo electrónico',
-                          hint: 'tu@email.com',
-                          prefixIcon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa tu correo';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Por favor ingresa un correo válido';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password field
-                        CustomTextField(
-                          controller: _passwordController,
-                          label: 'Contraseña',
-                          hint: '••••••••',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa una contraseña';
-                            }
-                            if (value.length < 6) {
-                              return 'La contraseña debe tener al menos 6 caracteres';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Confirm password field
-                        CustomTextField(
-                          controller: _confirmPasswordController,
-                          label: 'Confirmar contraseña',
-                          hint: '••••••••',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor confirma tu contraseña';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Las contraseñas no coinciden';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Register button
-                        SizedBox(
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _handleSignUp,
-                            child: const Text('Crear cuenta'),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildRoleCard(
+                            'Refugio', 
+                            'shelter', 
+                            Icons.local_hospital_rounded,
+                            Colors.teal
                           ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Info text
-                        Text(
-                          'Recibirás un correo de verificación para activar tu cuenta',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 30),
+
+                    CustomTextField(
+                      controller: _nameController,
+                      label: _selectedRole == 'shelter' ? 'Nombre del Refugio' : 'Nombre completo',
+                      hint: _selectedRole == 'shelter' ? 'Ej: Patitas Felices' : 'Ej: Juan Pérez', // <--- CORREGIDO: Se agregó hint
+                      prefixIcon: Icons.person_outline,
+                      validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _emailController,
+                      label: 'Correo electrónico',
+                      hint: 'tu@email.com', // <--- CORREGIDO: Se agregó hint
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) => !v!.contains('@') ? 'Email inválido' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _passwordController,
+                      label: 'Contraseña',
+                      hint: '••••••••', // <--- CORREGIDO: Se agregó hint
+                      prefixIcon: Icons.lock_outline,
+                      isPassword: true,
+                      validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _confirmPasswordController,
+                      label: 'Confirmar contraseña',
+                      hint: '••••••••', // <--- CORREGIDO: Se agregó hint
+                      prefixIcon: Icons.lock_outline,
+                      isPassword: true,
+                      validator: (v) => v != _passwordController.text ? 'No coinciden' : null,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: state is AuthLoading ? null : _handleSignUp,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Registrarse'),
+                    ),
+                  ],
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildRoleCard(String title, String value, IconData icon, Color color) {
+    final isSelected = _selectedRole == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedRole = value),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : Colors.white,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 40, color: isSelected ? color : Colors.grey),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? color : Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

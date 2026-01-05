@@ -8,11 +8,12 @@ abstract class AuthRemoteDataSource {
     required String password,
   });
 
+  // CORRECCIÓN: Se agregó el parámetro 'role' aquí para cumplir el contrato
   Future<UserModel> signUpWithEmailAndPassword({
     required String email,
     required String password,
     String? displayName,
-    
+    String? role, 
   });
 
   Future<void> sendPasswordResetEmail({
@@ -68,7 +69,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         password: password,
         data: {
           'display_name': displayName,
-          'role': role,
+          'role': role ?? 'adopter', // Rol por defecto si es nulo
         },
       );
 
@@ -89,7 +90,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
   }) async {
     try {
-      await supabaseClient.auth.resetPasswordForEmail(email, redirectTo: 'https://web-pet-adopt.netlify.app/reset-password');
+      // Asegúrate de que esta URL esté en la whitelist de Supabase > Auth > URL Configuration
+      await supabaseClient.auth.resetPasswordForEmail(
+        email, 
+        redirectTo: 'https://web-pet-adopt.netlify.app/reset-password'
+      );
     } on AuthException catch (e) {
       throw Exception(e.message);
     } catch (e) {
