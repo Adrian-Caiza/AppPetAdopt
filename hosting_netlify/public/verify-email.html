@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Email - Login Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: #f0f4ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon.success {
+            background: #d1f4e0;
+        }
+
+        .icon.error {
+            background: #ffe0e0;
+        }
+
+        .icon svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        h1 {
+            color: #2d3436;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            color: #636e72;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .button {
+            background: #6C5CE7;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s ease;
+        }
+
+        .button:hover {
+            background: #5f4fd1;
+        }
+
+        .button:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6C5CE7;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading-state">
+            <div class="icon">
+                <div class="loader"></div>
+            </div>
+            <h1>Verificando tu email...</h1>
+            <p>Por favor espera mientras confirmamos tu cuenta.</p>
+        </div>
+
+        <div id="success" class="hidden">
+            <div class="icon success">
+                <svg fill="#00D2A1" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+            </div>
+            <h1>¡Email verificado!</h1>
+            <p>Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión en la aplicación.</p>
+            <button class="button" onclick="openApp()">Abrir aplicación</button>
+        </div>
+
+        <div id="error" class="hidden">
+            <div class="icon error">
+                <svg fill="#FF6B6B" viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                </svg>
+            </div>
+            <h1>Error en la verificación</h1>
+            <p id="error-message">Hubo un problema al verificar tu email. El enlace puede haber expirado.</p>
+            <button class="button" onclick="openApp()">Ir a la aplicación</button>
+        </div>
+    </div>
+
+    <script>
+        async function verifyEmail() {
+            console.log("Iniciando verificación...");
+            
+            // 1. Obtener todos los parámetros posibles (Query ? y Hash #)
+            const queryParams = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+            // Imprimir para depuración (puedes verlo en la consola del navegador si hay problemas)
+            console.log("Query Params:", Object.fromEntries(queryParams));
+            console.log("Hash Params:", Object.fromEntries(hashParams));
+
+            // 2. Verificar errores reportados por Supabase
+            const error = queryParams.get('error') || hashParams.get('error');
+            const errorDescription = queryParams.get('error_description') || hashParams.get('error_description');
+
+            if (error) {
+                showError(errorDescription ? errorDescription.replace(/\+/g, ' ') : 'Error desconocido en la verificación');
+                return;
+            }
+
+            // 3. Buscar CUALQUIER indicador de éxito
+            // Supabase puede enviar: code (PKCE), access_token (Implicit), token_hash, o type=signup/recovery
+            const code = queryParams.get('code');
+            const token = queryParams.get('token');
+            const tokenHash = queryParams.get('token_hash');
+            const accessToken = hashParams.get('access_token');
+            const type = queryParams.get('type') || hashParams.get('type');
+
+            // Si existe cualquiera de estos, asumimos que Supabase nos envió aquí correctamente
+            if (code || token || tokenHash || accessToken || type === 'signup' || type === 'recovery' || type === 'invite') {
+                console.log("Credenciales encontradas. Éxito.");
+                
+                // Pequeña espera visual
+                setTimeout(() => {
+                    showSuccess();
+                }, 1000);
+            } else {
+                // Caso borde: El usuario abrió el enlace sin parámetros
+                console.error("No se encontraron credenciales");
+                // Muestra la URL actual en el mensaje de error para ayudar a depurar
+                showError('No se encontraron credenciales. URL actual: ' + window.location.href);
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('success').classList.remove('hidden');
+            openApp();
+        }
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        function openApp() {
+            // Recopilar todos los parámetros para pasarlos a la app
+            const search = window.location.search;
+            const hash = window.location.hash;
+            
+            // Construir el Deep Link pasando todo lo que recibimos
+            // La app decidirá qué usar (el 'code', el 'access_token', etc.)
+            let deepLink = 'loginpro://verified' + search + hash;
+            
+            console.log("Abriendo app con:", deepLink);
+            window.location.href = deepLink;
+        }
+
+        // Ejecutar al cargar
+        verifyEmail();
+    </script>
+</body>
+</html>

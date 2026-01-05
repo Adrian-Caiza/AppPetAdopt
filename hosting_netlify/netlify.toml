@@ -1,0 +1,22 @@
+[build]
+  publish = "public"
+  functions = "functions"
+
+# Esto hace que cuando el HTML llame a /api/config, 
+# Netlify lo redirija internamente a la función correcta.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Redirecciones limpias para que la URL se vea bonita
+[[redirects]]
+  from = "/verify-email"
+  to = "/verify-email.html"
+  status = 200
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/reset-password.html"
+  status = 200
+
