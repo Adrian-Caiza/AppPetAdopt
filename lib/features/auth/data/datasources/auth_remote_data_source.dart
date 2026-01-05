@@ -12,6 +12,7 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
     String? displayName,
+    
   });
 
   Future<void> sendPasswordResetEmail({
@@ -59,12 +60,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
     required String password,
     String? displayName,
+    String? role,
   }) async {
     try {
       final response = await supabaseClient.auth.signUp(
         email: email,
         password: password,
-        data: displayName != null ? {'display_name': displayName} : null,
+        data: {
+          'display_name': displayName,
+          'role': role,
+        },
       );
 
       if (response.user == null) {
@@ -84,7 +89,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
   }) async {
     try {
-      await supabaseClient.auth.resetPasswordForEmail(email, redirectTo: 'https://login-netlify.netlify.app/reset-password');
+      await supabaseClient.auth.resetPasswordForEmail(email, redirectTo: 'https://web-pet-adopt.netlify.app/reset-password');
     } on AuthException catch (e) {
       throw Exception(e.message);
     } catch (e) {

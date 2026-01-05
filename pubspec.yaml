@@ -64,6 +64,11 @@ dependencies:
   flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0
 
+  flutter_map: ^6.0.0 # Para mapas
+  latlong2: ^0.9.0 # Para coordenadas en flutter_map
+  geolocator: ^10.1.0 # Para ubicación del usuario
+  google_generative_ai: ^0.2.0 # Para integración con Google Gemini
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
