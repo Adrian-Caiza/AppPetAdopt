@@ -68,11 +68,15 @@ class PetBloc extends Bloc<PetEvent, PetState> {
 
     on<UpdatePetRequested>((event, emit) async {
       emit(PetLoading());
-      final result = await updatePet(event.pet);
+      // Usamos params para enviar mascota + imagen
+      final result = await updatePet(UpdatePetParams(
+        pet: event.pet, 
+        image: event.image
+      ));
+      
       result.fold(
         (failure) => emit(PetError(failure.toString())),
         (_) => emit(PetSuccess()),
       );
     });
-  }
-}
+} }

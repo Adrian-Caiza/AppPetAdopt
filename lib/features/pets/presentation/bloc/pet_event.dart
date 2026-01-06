@@ -3,7 +3,7 @@ part of 'pet_bloc.dart';
 abstract class PetEvent extends Equatable {
   const PetEvent();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class AddPetRequested extends PetEvent {
@@ -25,6 +25,10 @@ class DeletePetRequested extends PetEvent {
 
 class UpdatePetRequested extends PetEvent {
   final PetEntity pet;
-  // Opcional: Si quisieras permitir cambiar la foto, agregarías File? image
-  const UpdatePetRequested({required this.pet});
+  final File? image;
+  
+  const UpdatePetRequested({required this.pet, this.image});
+
+  @override
+  List<Object?> get props => [pet, image];
 }

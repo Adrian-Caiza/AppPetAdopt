@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/pet_entity.dart';
-import '../bloc/pet_bloc.dart'; // Solo importamos el Bloc (que ya trae Event y State)
+import '../bloc/pet_bloc.dart'; 
 import '../../../auth/presentation/widgets/custom_text_field.dart';
 import '../../../auth/presentation/widgets/loading_overlay.dart';
 
@@ -117,7 +117,7 @@ class _AddPetViewState extends State<_AddPetView> {
 
       if (isEditing) {
         // Enviar evento de Actualizar
-        context.read<PetBloc>().add(UpdatePetRequested(pet: petData));
+        context.read<PetBloc>().add(UpdatePetRequested(pet: petData, image: _selectedImage));
       } else {
         // Enviar evento de Crear
         context.read<PetBloc>().add(AddPetRequested(pet: petData, image: _selectedImage!));

@@ -8,5 +8,6 @@ abstract class PetRepository {
   Future<Either<Failure, List<PetEntity>>> getPets();
   Future<Either<Failure, List<PetEntity>>> getShelterPets();
   Future<Either<Failure, void>> deletePet(String id);
-  Future<Either<Failure, void>> updatePet(PetEntity pet);
+  Future<Either<Failure, void>> updatePet(PetEntity pet, File? image);
+  
 }

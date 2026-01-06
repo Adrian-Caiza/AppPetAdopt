@@ -80,10 +80,9 @@ class PetRepositoryImpl implements PetRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updatePet(PetEntity pet) async {
+  Future<Either<Failure, void>> updatePet(PetEntity pet, File? image) async { // <--- Recibimos imagen
     if (!await networkInfo.isConnected) return const Left(NetworkFailure('Sin internet'));
     try {
-      // Convertimos Entity a Model para pasarlo al DataSource
       final petModel = PetModel(
         id: pet.id,
         shelterId: pet.shelterId,
@@ -97,7 +96,8 @@ class PetRepositoryImpl implements PetRepository {
         photos: pet.photos,
         status: pet.status,
       );
-      await remoteDataSource.updatePet(petModel);
+      // Pasamos la imagen al DataSource
+      await remoteDataSource.updatePet(petModel, image); 
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
