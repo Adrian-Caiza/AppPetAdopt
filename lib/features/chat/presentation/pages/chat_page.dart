@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_generative_ai/google_generative_ai.dart'; 
 import '../../../../core/services/gemini_service.dart';
 import '../../../../injection_container.dart';
 
@@ -11,26 +12,64 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  // Usamos el servicio directamente (para simplicidad, sin BLoC por ahora)
+  // Obtenemos el servicio (que ahora mantiene la sesión viva)
   final GeminiService _geminiService = getIt<GeminiService>();
   
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, String>> _messages = []; // {'role': 'user'|'bot', 'text': '...'}
+  
+  // Lista local para mostrar en la UI
+  final List<Map<String, String>> _messages = []; 
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Mensaje de bienvenida
-    _addMessage('bot', '¡Hola! 🐶🐱 Soy PetBot. ¿En qué puedo ayudarte hoy con tu mascota?');
+    // Cargamos el historial existente al iniciar
+    _loadHistory();
+  }
+
+  void _loadHistory() {
+    // Obtenemos el historial desde el servicio (si existe)
+    final history = _geminiService.history;
+    
+    // Si la historia está vacía, mostramos el saludo inicial
+    if (history.isEmpty) {
+      _addMessage('bot', '¡Hola! 🐶🐱 Soy PetBot. ¿En qué puedo ayudarte hoy con tu mascota?');
+    } else {
+      // Si HAY historial, lo procesamos para mostrarlo
+      for (var content in history) {
+        // Extraemos el texto de las partes del mensaje
+        final text = content.parts
+            .whereType<TextPart>()
+            .map((e) => e.text)
+            .join();
+        
+        // Convertimos el rol de Gemini ('model') al rol de nuestra UI ('bot')
+        final role = content.role == 'user' ? 'user' : 'bot';
+        
+        if (text.isNotEmpty) {
+          _messages.add({'role': role, 'text': text});
+        }
+      }
+      
+      // Actualizamos la UI
+      setState(() {}); 
+      
+      // Hacemos scroll al final para ver los últimos mensajes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    }
   }
 
   void _addMessage(String role, String text) {
     setState(() {
       _messages.add({'role': role, 'text': text});
     });
-    // Scroll al final automáticamente
+    // Scroll al final automáticamente con animación
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -50,7 +89,7 @@ class _ChatPageState extends State<ChatPage> {
     _addMessage('user', text);
     setState(() => _isLoading = true);
 
-    // Llamada a Gemini
+    // Llamada a Gemini (el servicio se encarga de guardar el contexto)
     final response = await _geminiService.sendMessage(text);
 
     setState(() => _isLoading = false);

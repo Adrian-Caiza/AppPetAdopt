@@ -1,9 +1,11 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+
 class GeminiService {
   late final GenerativeModel _model;
   late final ChatSession _chat; // Usamos ChatSession para manejar el historial automáticamente
+  
 
   GeminiService() {
     final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -12,8 +14,8 @@ class GeminiService {
     }
 
     _model = GenerativeModel(
-      // CAMBIO 1: Usamos 'gemini-1.5-flash' que es el actual estándar rápido/gratuito
-      model: 'gemini-1.5-flash', 
+      
+      model: 'gemini-2.5-flash', 
       apiKey: apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.7, 
@@ -31,6 +33,10 @@ class GeminiService {
     // CAMBIO 3: Iniciamos la sesión de chat
     _chat = _model.startChat();
   }
+
+  Iterable<Content> get history => _chat.history;
+
+  
 
   Future<String> sendMessage(String message) async {
     try {
