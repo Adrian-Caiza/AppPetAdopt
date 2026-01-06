@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_constants.dart';
 import 'injection_container.config.dart';
 import 'core/services/gemini_service.dart';
+
+// Imports Adoption
 import 'features/adoption/data/datasources/adoption_remote_data_source.dart';
 import 'features/adoption/data/repositories/adoption_repository_impl.dart';
 import 'features/adoption/domain/repositories/adoption_repository.dart';
@@ -14,8 +16,13 @@ import 'features/adoption/domain/usecases/get_shelter_requests.dart';
 import 'features/adoption/domain/usecases/update_adoption_status.dart';
 import 'features/adoption/presentation/bloc/shelter_requests_bloc.dart';
 
-// Importa tus datasources
+// Imports Pets 
 import 'features/pets/data/datasources/pet_remote_data_source.dart';
+import 'features/pets/data/repositories/pet_repository_impl.dart';
+import 'features/pets/domain/repositories/pet_repository.dart';
+import 'features/pets/domain/usecases/add_pet.dart';
+import 'features/pets/domain/usecases/get_pets.dart';
+import 'features/pets/presentation/bloc/pet_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -41,10 +48,13 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<AdoptionBloc>(() => AdoptionBloc(getIt()));
   getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt()));
   getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt()));
-// Bloc Nuevo
-  getIt.registerFactory<ShelterRequestsBloc>(
-    () => ShelterRequestsBloc(getIt(), getIt()),
-  );
+  getIt.registerFactory<ShelterRequestsBloc>(() => ShelterRequestsBloc(getIt(), getIt()),);
+  // --- FEATURE: PETS  ---
+  getIt.registerLazySingleton<PetRemoteDataSource>(() => PetRemoteDataSourceImpl(getIt<SupabaseClient>()));
+  getIt.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
+  getIt.registerLazySingleton<AddPet>(() => AddPet(getIt()));
+  getIt.registerLazySingleton<GetPets>(() => GetPets(getIt()));
+  getIt.registerFactory<PetBloc>(() => PetBloc(addPet: getIt(), getPets: getIt()),);
 
   // REGISTRO MANUAL DE PET DATASOURCE (Si @injectable falla o prefieres manual)
   // Nota: Si usas build_runner y @Injectable, esto se genera solo en injection_container.config.dart.

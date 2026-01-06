@@ -8,6 +8,7 @@ class UserModel extends UserEntity {
     super.displayName,
     super.photoUrl,
     super.createdAt,
+    super.userMetadata,
   });
 
   factory UserModel.fromSupabaseUser(User user) {
@@ -17,6 +18,7 @@ class UserModel extends UserEntity {
       displayName: user.userMetadata?['display_name'] as String?,
       photoUrl: user.userMetadata?['avatar_url'] as String?,
       createdAt: DateTime.parse(user.createdAt),
+      userMetadata: user.userMetadata,
     );
   }
 
@@ -27,6 +29,7 @@ class UserModel extends UserEntity {
       displayName: displayName,
       photoUrl: photoUrl,
       createdAt: createdAt,
+      userMetadata: userMetadata,
     );
   }
 }
