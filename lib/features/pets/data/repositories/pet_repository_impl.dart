@@ -56,4 +56,51 @@ class PetRepositoryImpl implements PetRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<PetEntity>>> getShelterPets() async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure('Sin internet'));
+    try {
+      final result = await remoteDataSource.getShelterPets();
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePet(String id) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure('Sin internet'));
+    try {
+      await remoteDataSource.deletePet(id);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePet(PetEntity pet) async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure('Sin internet'));
+    try {
+      // Convertimos Entity a Model para pasarlo al DataSource
+      final petModel = PetModel(
+        id: pet.id,
+        shelterId: pet.shelterId,
+        name: pet.name,
+        species: pet.species,
+        breed: pet.breed,
+        age: pet.age,
+        gender: pet.gender,
+        size: pet.size,
+        description: pet.description,
+        photos: pet.photos,
+        status: pet.status,
+      );
+      await remoteDataSource.updatePet(petModel);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

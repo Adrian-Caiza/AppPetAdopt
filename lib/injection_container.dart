@@ -3,8 +3,9 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_constants.dart';
-import 'injection_container.config.dart';
 import 'core/services/gemini_service.dart';
+import 'core/network/network_info.dart';
+// import 'injection_container.config.dart'; // Si usas build_runner
 
 // Imports Auth
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
@@ -25,7 +26,9 @@ import 'features/adoption/domain/usecases/submit_adoption_request.dart';
 import 'features/adoption/presentation/bloc/adoption_bloc.dart';
 import 'features/adoption/domain/usecases/get_shelter_requests.dart';
 import 'features/adoption/domain/usecases/update_adoption_status.dart';
+import 'features/adoption/domain/usecases/get_adopter_requests.dart'; // <--- NUEVO
 import 'features/adoption/presentation/bloc/shelter_requests_bloc.dart';
+import 'features/adoption/presentation/bloc/adopter_requests_bloc.dart'; // <--- NUEVO
 
 // Imports Pets 
 import 'features/pets/data/datasources/pet_remote_data_source.dart';
@@ -33,6 +36,9 @@ import 'features/pets/data/repositories/pet_repository_impl.dart';
 import 'features/pets/domain/repositories/pet_repository.dart';
 import 'features/pets/domain/usecases/add_pet.dart';
 import 'features/pets/domain/usecases/get_pets.dart';
+import 'features/pets/domain/usecases/get_shelter_pets.dart'; // <--- NUEVO
+import 'features/pets/domain/usecases/delete_pet.dart';      // <--- NUEVO
+import 'features/pets/domain/usecases/update_pet.dart';      // <--- NUEVO
 import 'features/pets/presentation/bloc/pet_bloc.dart';
 
 final getIt = GetIt.instance;
@@ -48,60 +54,138 @@ Future<void> configureDependencies() async {
     ),
   );
 
-  // Register external dependencies
-  getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  // =========================================================
+  // 1. REGISTRO DE DEPENDENCIAS BÁSICAS Y EXTERNAS
+  // =========================================================
+  
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
+  
+  // NetworkInfo (Debe ir antes que los Repositories)
+  getIt.registerLazySingleton<NetworkInfo>(
+    () => NetworkInfoImpl(getIt<Connectivity>())
+  );
+  
+  getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  
   getIt.registerLazySingleton<GeminiService>(() => GeminiService());
 
-  // --- FEATURE: AUTH (ESTO FALTABA) ---
-  // Data Source
+  // =========================================================
+  // 2. REGISTRO DE DATA SOURCES
+  // =========================================================
+  
+  // Auth
   getIt.registerLazySingleton<AuthRemoteDataSource>(
-      () => AuthRemoteDataSourceImpl(getIt<SupabaseClient>()));
+    () => AuthRemoteDataSourceImpl(getIt<SupabaseClient>())
+  );
   
-  // Repository
-  getIt.registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
+  // Adoption
+  getIt.registerLazySingleton<AdoptionRemoteDataSource>(
+    () => AdoptionRemoteDataSourceImpl(getIt<SupabaseClient>())
+  );
   
-  // Use Cases
-  getIt.registerLazySingleton<SignIn>(() => SignIn(getIt()));
-  getIt.registerLazySingleton<SignUp>(() => SignUp(getIt()));
-  getIt.registerLazySingleton<SignOut>(() => SignOut(getIt()));
-  getIt.registerLazySingleton<GetCurrentUser>(() => GetCurrentUser(getIt()));
-  getIt.registerLazySingleton<ResetPassword>(() => ResetPassword(getIt())); 
+  // Pets
+  getIt.registerLazySingleton<PetRemoteDataSource>(
+    () => PetRemoteDataSourceImpl(getIt<SupabaseClient>())
+  );
 
-  // Bloc
+  // =========================================================
+  // 3. REGISTRO DE REPOSITORIES (Inyectando NetworkInfo)
+  // =========================================================
+  
+  // Auth
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      remoteDataSource: getIt<AuthRemoteDataSource>(),
+      networkInfo: getIt<NetworkInfo>(),
+    )
+  );
+  
+  // Adoption
+  getIt.registerLazySingleton<AdoptionRepository>(
+    () => AdoptionRepositoryImpl(
+      remoteDataSource: getIt<AdoptionRemoteDataSource>(),
+      networkInfo: getIt<NetworkInfo>(),
+    )
+  );
+  
+  // Pets
+  getIt.registerLazySingleton<PetRepository>(
+    () => PetRepositoryImpl(
+      remoteDataSource: getIt<PetRemoteDataSource>(),
+      networkInfo: getIt<NetworkInfo>(),
+    )
+  );
+
+  // =========================================================
+  // 4. REGISTRO DE USE CASES
+  // =========================================================
+  
+  // --- Auth Use Cases ---
+  getIt.registerLazySingleton<SignIn>(() => SignIn(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<SignUp>(() => SignUp(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<SignOut>(() => SignOut(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<GetCurrentUser>(() => GetCurrentUser(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<ResetPassword>(() => ResetPassword(getIt<AuthRepository>()));
+  
+  // --- Adoption Use Cases ---
+  getIt.registerLazySingleton<SubmitAdoptionRequest>(() => SubmitAdoptionRequest(getIt<AdoptionRepository>()));
+  getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt<AdoptionRepository>()));
+  getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt<AdoptionRepository>()));
+  getIt.registerLazySingleton<GetAdopterRequests>(() => GetAdopterRequests(getIt<AdoptionRepository>())); // <--- NUEVO
+  
+  // --- Pets Use Cases ---
+  getIt.registerLazySingleton<AddPet>(() => AddPet(getIt<PetRepository>()));
+  getIt.registerLazySingleton<GetPets>(() => GetPets(getIt<PetRepository>()));
+  getIt.registerLazySingleton<GetShelterPets>(() => GetShelterPets(getIt<PetRepository>())); // <--- NUEVO
+  getIt.registerLazySingleton<DeletePet>(() => DeletePet(getIt<PetRepository>()));         // <--- NUEVO
+  getIt.registerLazySingleton<UpdatePet>(() => UpdatePet(getIt<PetRepository>()));         // <--- NUEVO
+
+  // =========================================================
+  // 5. REGISTRO DE BLOCS
+  // =========================================================
+  
+  // Auth Bloc
   getIt.registerFactory<AuthBloc>(
     () => AuthBloc(
-      signIn: getIt(),
-      signUp: getIt(),
-      signOut: getIt(),
-      getCurrentUser: getIt(),
-      resetPassword: getIt(),
+      signIn: getIt<SignIn>(),
+      signUp: getIt<SignUp>(),
+      signOut: getIt<SignOut>(),
+      getCurrentUser: getIt<GetCurrentUser>(),
+      resetPassword: getIt<ResetPassword>(),
     ),
   );
-
-  // --- FEATURE: ADOPTION ---
-  getIt.registerLazySingleton<AdoptionRemoteDataSource>(() => AdoptionRemoteDataSourceImpl(getIt<SupabaseClient>()));
-  getIt.registerLazySingleton<AdoptionRepository>(() => AdoptionRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
   
-  getIt.registerLazySingleton<SubmitAdoptionRequest>(() => SubmitAdoptionRequest(getIt()));
-  getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt()));
-  getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt()));
+  // Adoption: Crear solicitud
+  getIt.registerFactory<AdoptionBloc>(
+    () => AdoptionBloc(getIt<SubmitAdoptionRequest>())
+  );
   
-  getIt.registerFactory<AdoptionBloc>(() => AdoptionBloc(getIt()));
-  getIt.registerFactory<ShelterRequestsBloc>(() => ShelterRequestsBloc(getIt(), getIt()));
-
-  // --- FEATURE: PETS ---
-  getIt.registerLazySingleton<PetRemoteDataSource>(() => PetRemoteDataSourceImpl(getIt<SupabaseClient>()));
-  getIt.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
-  
-  getIt.registerLazySingleton<AddPet>(() => AddPet(getIt()));
-  getIt.registerLazySingleton<GetPets>(() => GetPets(getIt()));
-  
-  getIt.registerFactory<PetBloc>(
-    () => PetBloc(addPet: getIt(), getPets: getIt())
+  // Adoption: Refugio Dashboard
+  getIt.registerFactory<ShelterRequestsBloc>(
+    () => ShelterRequestsBloc(
+      getIt<GetShelterRequests>(),
+      getIt<UpdateAdoptionStatus>(),
+    )
   );
 
-  // Si usas build_runner, mantén esto. Si no, no hará daño.
-  getIt.init(); 
+  // Adoption: Adoptante Mis Solicitudes (NUEVO)
+  getIt.registerFactory<AdopterRequestsBloc>(
+    () => AdopterRequestsBloc(
+      getIt<GetAdopterRequests>()
+    )
+  );
+  
+  // Pet Bloc (ACTUALIZADO con nuevos use cases)
+  getIt.registerFactory<PetBloc>(
+    () => PetBloc(
+      addPet: getIt<AddPet>(),
+      getPets: getIt<GetPets>(),
+      // Inyectamos los nuevos casos de uso que agregamos al constructor del Bloc
+      getShelterPets: getIt<GetShelterPets>(),
+      deletePet: getIt<DeletePet>(),
+      updatePet: getIt<UpdatePet>(),
+    )
+  );
+  
+  // getIt.init(); // Descomentar si usas generación de código automática
 }

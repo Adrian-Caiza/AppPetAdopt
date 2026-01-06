@@ -16,3 +16,15 @@ class AddPetRequested extends PetEvent {
 class GetPetsRequested extends PetEvent {
   const GetPetsRequested();
 }
+
+class LoadShelterPets extends PetEvent {}
+class DeletePetRequested extends PetEvent {
+  final String petId;
+  const DeletePetRequested(this.petId);
+}
+
+class UpdatePetRequested extends PetEvent {
+  final PetEntity pet;
+  // Opcional: Si quisieras permitir cambiar la foto, agregarías File? image
+  const UpdatePetRequested({required this.pet});
+}

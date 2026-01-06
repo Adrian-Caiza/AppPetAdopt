@@ -60,4 +60,15 @@ class AdoptionRepositoryImpl implements AdoptionRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<AdoptionRequestEntity>>> getAdopterRequests() async {
+    if (!await networkInfo.isConnected) return const Left(NetworkFailure('Sin internet'));
+    try {
+      final result = await remoteDataSource.getAdopterRequests();
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

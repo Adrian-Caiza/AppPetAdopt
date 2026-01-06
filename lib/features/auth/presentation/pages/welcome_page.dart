@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/user_entity.dart';
-import '../../../pets/presentation/pages/pet_feed_page.dart'; 
-import 'shelter_home_page.dart'; 
+// import '../../../pets/presentation/pages/pet_feed_page.dart'; 
+// import 'shelter_home_page.dart'; 
+import '../../../home/presentation/pages/shelter_main_layout.dart';
+import '../../../home/presentation/pages/adopter_main_layout.dart';
 
 class WelcomePage extends StatefulWidget {
   final UserEntity user;
@@ -28,11 +30,11 @@ class _WelcomePageState extends State<WelcomePage> {
 
     if (role == 'shelter') {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const ShelterHomePage()),
+        MaterialPageRoute(builder: (_) => ShelterMainLayout(user: widget.user)),
       );
     } else {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const PetFeedPage()),
+        MaterialPageRoute(builder: (_) => AdopterMainLayout(user: widget.user)),
       );
     }
   }

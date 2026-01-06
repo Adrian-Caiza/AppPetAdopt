@@ -3,9 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
   late final GenerativeModel _model;
-  
-  // Historial de chat para mantener el contexto
-  final List<Content> _chatHistory = [];
+  late final ChatSession _chat; // Usamos ChatSession para manejar el historial automáticamente
 
   GeminiService() {
     final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -14,39 +12,33 @@ class GeminiService {
     }
 
     _model = GenerativeModel(
-      model: 'gemini-pro', 
+      // CAMBIO 1: Usamos 'gemini-1.5-flash' que es el actual estándar rápido/gratuito
+      model: 'gemini-1.5-flash', 
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.7, // Creatividad equilibrada
+        temperature: 0.7, 
+      ),
+      // CAMBIO 2: Inyectamos la personalidad como 'systemInstruction' nativa
+      // (Esto evita el error de mandar dos mensajes de usuario seguidos)
+      systemInstruction: Content.system(
+        'Eres un asistente veterinario amable y experto llamado "PetBot". '
+        'Ayudas a adoptantes con dudas sobre cuidado de mascotas. '
+        'Tus respuestas son concisas, empáticas y usas emojis. '
+        'Si la pregunta es sobre temas médicos graves, recomienda ir a un veterinario real.'
       ),
     );
+
+    // CAMBIO 3: Iniciamos la sesión de chat
+    _chat = _model.startChat();
   }
 
   Future<String> sendMessage(String message) async {
     try {
-      // Prompt del sistema para darle personalidad
-      const systemPrompt = 
-          'Eres un asistente veterinario amable y experto llamado "PetBot". '
-          'Ayudas a adoptantes con dudas sobre cuidado de mascotas. '
-          'Tus respuestas son concisas, empáticas y usas emojis. '
-          'Si la pregunta es sobre temas médicos graves, recomienda ir a un veterinario real.';
-
-      // Preparamos el historial si es la primera vez
-      if (_chatHistory.isEmpty) {
-        _chatHistory.add(Content.text(systemPrompt));
-      }
-
-      // Agregamos mensaje del usuario
-      _chatHistory.add(Content.text(message));
-
-      // Enviamos a Gemini
-      final response = await _model.generateContent(_chatHistory);
-      final responseText = response.text ?? 'Lo siento, no pude procesar eso.';
-
-      // Agregamos respuesta de la IA al historial
-      _chatHistory.add(Content.model([TextPart(responseText)]));
-
-      return responseText;
+      // Enviamos mensaje usando el objeto ChatSession
+      // Esto maneja automáticamente el historial User -> Model -> User
+      final response = await _chat.sendMessage(Content.text(message));
+      
+      return response.text ?? 'Lo siento, no pude procesar eso.';
     } catch (e) {
       return 'Error de conexión con IA: $e';
     }

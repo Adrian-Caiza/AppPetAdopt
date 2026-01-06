@@ -8,15 +8,53 @@ import 'features/auth/presentation/bloc/auth_state.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/welcome_page.dart';
 import 'injection_container.dart';
+import 'core/network/network_info.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Load environment variables
-  await dotenv.load(fileName: '.env');
-
-  await configureDependencies();
-  runApp(const MyApp());
+  
+  print('=== INICIANDO APLICACIÓN ===');
+  
+  try {
+    await dotenv.load(fileName: '.env');
+    print('✓ .env cargado');
+    
+    await configureDependencies();
+    print('✓ Dependencias configuradas');
+    
+    // Verifica que NetworkInfo esté registrado
+    try {
+      final networkInfo = getIt<NetworkInfo>();
+      print('✓ NetworkInfo registrado correctamente');
+    } catch (e) {
+      print('✗ Error obteniendo NetworkInfo: $e');
+    }
+    
+    runApp(const MyApp());
+  } catch (e, stack) {
+    print('✗ ERROR FATAL: $e');
+    print(stack);
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Error: ${e.toString()}', style: TextStyle(color: Colors.red)),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => main(),
+                  child: Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+  }
 }
 
 class MyApp extends StatelessWidget {

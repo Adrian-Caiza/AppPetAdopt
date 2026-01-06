@@ -6,6 +6,9 @@ import '../models/pet_model.dart';
 abstract class PetRemoteDataSource {
   Future<void> addPet(PetModel pet, File imageFile);
   Future<List<PetModel>> getPets();
+  Future<List<PetModel>> getShelterPets(); // Mascotas del refugio actual
+  Future<void> deletePet(String id);
+  Future<void> updatePet(PetModel pet);
 }
 
 @LazySingleton(as: PetRemoteDataSource)
@@ -62,5 +65,39 @@ class PetRemoteDataSourceImpl implements PetRemoteDataSource {
     } catch (e) {
       throw Exception('Error al cargar mascotas: $e');
     }
+  }
+
+  @override
+  Future<List<PetModel>> getShelterPets() async {
+    try {
+      final user = client.auth.currentUser;
+      if (user == null) throw Exception('No autenticado');
+      
+      final response = await client
+          .from('pets')
+          .select()
+          .eq('shelter_id', user.id) // Filtra por MI ID
+          .order('created_at', ascending: false);
+      return (response as List).map((json) => PetModel.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Error al cargar mis mascotas: $e');
+    }
+  }
+
+  @override
+  Future<void> deletePet(String id) async {
+    await client.from('pets').delete().eq('id', id);
+  }
+
+  @override
+  Future<void> updatePet(PetModel pet) async {
+    // Nota: Para editar imagen se requiere lógica extra, aquí actualizamos datos básicos
+    await client.from('pets').update({
+      'name': pet.name,
+      'breed': pet.breed,
+      'age': pet.age,
+      'description': pet.description,
+      'status': pet.status,
+    }).eq('id', pet.id!);
   }
 }
