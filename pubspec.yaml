@@ -68,6 +68,9 @@ dependencies:
   latlong2: ^0.9.0 # Para coordenadas en flutter_map
   geolocator: ^10.1.0 # Para ubicación del usuario
   google_generative_ai: ^0.2.0 # Para integración con Google Gemini
+  flutter_markdown: ^0.6.14 # Para renderizar Markdown
+  image_picker: ^1.0.7 # Para selección de imágenes
+
 
 dev_dependencies:
   flutter_test:

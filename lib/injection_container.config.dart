@@ -30,6 +30,16 @@ import 'package:app_pet_adopt/features/auth/presentation/bloc/auth_bloc.dart'
     as _i330;
 import 'package:app_pet_adopt/features/pets/data/datasources/pet_remote_data_source.dart'
     as _i63;
+import 'package:app_pet_adopt/features/pets/data/repositories/pet_repository_impl.dart'
+    as _i481;
+import 'package:app_pet_adopt/features/pets/domain/repositories/pet_repository.dart'
+    as _i1036;
+import 'package:app_pet_adopt/features/pets/domain/usecases/add_pet.dart'
+    as _i454;
+import 'package:app_pet_adopt/features/pets/domain/usecases/get_pets.dart'
+    as _i5;
+import 'package:app_pet_adopt/features/pets/presentation/bloc/pet_bloc.dart'
+    as _i351;
 import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
@@ -57,6 +67,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i63.PetRemoteDataSource>(
       () => _i63.PetRemoteDataSourceImpl(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i1036.PetRepository>(
+      () => _i481.PetRepositoryImpl(
+        remoteDataSource: gh<_i63.PetRemoteDataSource>(),
+        networkInfo: gh<_i847.NetworkInfo>(),
+      ),
+    );
     gh.factory<_i338.GetCurrentUser>(
       () => _i338.GetCurrentUser(gh<_i296.AuthRepository>()),
     );
@@ -74,6 +90,16 @@ extension GetItInjectableX on _i174.GetIt {
         signOut: gh<_i854.SignOut>(),
         getCurrentUser: gh<_i338.GetCurrentUser>(),
       ),
+    );
+    gh.lazySingleton<_i454.AddPet>(
+      () => _i454.AddPet(gh<_i1036.PetRepository>()),
+    );
+    gh.lazySingleton<_i5.GetPets>(
+      () => _i5.GetPets(gh<_i1036.PetRepository>()),
+    );
+    gh.factory<_i351.PetBloc>(
+      () =>
+          _i351.PetBloc(addPet: gh<_i454.AddPet>(), getPets: gh<_i5.GetPets>()),
     );
     return this;
   }
