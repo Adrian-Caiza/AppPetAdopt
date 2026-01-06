@@ -6,6 +6,17 @@ import 'core/constants/app_constants.dart';
 import 'injection_container.config.dart';
 import 'core/services/gemini_service.dart';
 
+// Imports Auth
+import 'features/auth/data/datasources/auth_remote_data_source.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/usecases/get_current_user.dart';
+import 'features/auth/domain/usecases/sign_in.dart';
+import 'features/auth/domain/usecases/sign_out.dart';
+import 'features/auth/domain/usecases/sign_up.dart';
+import 'features/auth/domain/usecases/reset_password.dart'; 
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+
 // Imports Adoption
 import 'features/adoption/data/datasources/adoption_remote_data_source.dart';
 import 'features/adoption/data/repositories/adoption_repository_impl.dart';
@@ -41,29 +52,56 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
   getIt.registerLazySingleton<GeminiService>(() => GeminiService());
-  // Adoption Feature
+
+  // --- FEATURE: AUTH (ESTO FALTABA) ---
+  // Data Source
+  getIt.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(getIt<SupabaseClient>()));
+  
+  // Repository
+  getIt.registerLazySingleton<AuthRepository>(
+      () => AuthRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
+  
+  // Use Cases
+  getIt.registerLazySingleton<SignIn>(() => SignIn(getIt()));
+  getIt.registerLazySingleton<SignUp>(() => SignUp(getIt()));
+  getIt.registerLazySingleton<SignOut>(() => SignOut(getIt()));
+  getIt.registerLazySingleton<GetCurrentUser>(() => GetCurrentUser(getIt()));
+  getIt.registerLazySingleton<ResetPassword>(() => ResetPassword(getIt())); 
+
+  // Bloc
+  getIt.registerFactory<AuthBloc>(
+    () => AuthBloc(
+      signIn: getIt(),
+      signUp: getIt(),
+      signOut: getIt(),
+      getCurrentUser: getIt(),
+      resetPassword: getIt(),
+    ),
+  );
+
+  // --- FEATURE: ADOPTION ---
   getIt.registerLazySingleton<AdoptionRemoteDataSource>(() => AdoptionRemoteDataSourceImpl(getIt<SupabaseClient>()));
   getIt.registerLazySingleton<AdoptionRepository>(() => AdoptionRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
+  
   getIt.registerLazySingleton<SubmitAdoptionRequest>(() => SubmitAdoptionRequest(getIt()));
-  getIt.registerFactory<AdoptionBloc>(() => AdoptionBloc(getIt()));
   getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt()));
   getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt()));
-  getIt.registerFactory<ShelterRequestsBloc>(() => ShelterRequestsBloc(getIt(), getIt()),);
-  // --- FEATURE: PETS  ---
+  
+  getIt.registerFactory<AdoptionBloc>(() => AdoptionBloc(getIt()));
+  getIt.registerFactory<ShelterRequestsBloc>(() => ShelterRequestsBloc(getIt(), getIt()));
+
+  // --- FEATURE: PETS ---
   getIt.registerLazySingleton<PetRemoteDataSource>(() => PetRemoteDataSourceImpl(getIt<SupabaseClient>()));
   getIt.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(remoteDataSource: getIt(), networkInfo: getIt()));
+  
   getIt.registerLazySingleton<AddPet>(() => AddPet(getIt()));
   getIt.registerLazySingleton<GetPets>(() => GetPets(getIt()));
-  getIt.registerFactory<PetBloc>(() => PetBloc(addPet: getIt(), getPets: getIt()),);
-
-  // REGISTRO MANUAL DE PET DATASOURCE (Si @injectable falla o prefieres manual)
-  // Nota: Si usas build_runner y @Injectable, esto se genera solo en injection_container.config.dart.
-  // Pero asegúrate de correr: flutter pub run build_runner build
   
-  // getIt.registerLazySingleton<PetRemoteDataSource>(
-  //   () => PetRemoteDataSourceImpl(getIt<SupabaseClient>())
-  // );
+  getIt.registerFactory<PetBloc>(
+    () => PetBloc(addPet: getIt(), getPets: getIt())
+  );
 
-  // Initialize injectable (Generado)
-  getIt.init();
+  // Si usas build_runner, mantén esto. Si no, no hará daño.
+  getIt.init(); 
 }

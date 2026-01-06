@@ -10,6 +10,22 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:app_pet_adopt/core/network/network_info.dart' as _i847;
+import 'package:app_pet_adopt/features/adoption/data/datasources/adoption_remote_data_source.dart'
+    as _i475;
+import 'package:app_pet_adopt/features/adoption/data/repositories/adoption_repository_impl.dart'
+    as _i824;
+import 'package:app_pet_adopt/features/adoption/domain/repositories/adoption_repository.dart'
+    as _i1069;
+import 'package:app_pet_adopt/features/adoption/domain/usecases/get_shelter_requests.dart'
+    as _i41;
+import 'package:app_pet_adopt/features/adoption/domain/usecases/submit_adoption_request.dart'
+    as _i427;
+import 'package:app_pet_adopt/features/adoption/domain/usecases/update_adoption_status.dart'
+    as _i327;
+import 'package:app_pet_adopt/features/adoption/presentation/bloc/adoption_bloc.dart'
+    as _i776;
+import 'package:app_pet_adopt/features/adoption/presentation/bloc/shelter_requests_bloc.dart'
+    as _i981;
 import 'package:app_pet_adopt/features/auth/data/datasources/auth_remote_data_source.dart'
     as _i883;
 import 'package:app_pet_adopt/features/auth/data/repositories/auth_repository_impl.dart'
@@ -58,6 +74,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i847.NetworkInfo>(
       () => _i847.NetworkInfoImpl(gh<_i895.Connectivity>()),
     );
+    gh.lazySingleton<_i475.AdoptionRemoteDataSource>(
+      () => _i475.AdoptionRemoteDataSourceImpl(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i296.AuthRepository>(
       () => _i990.AuthRepositoryImpl(
         remoteDataSource: gh<_i883.AuthRemoteDataSource>(),
@@ -82,6 +101,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i656.SignIn>(() => _i656.SignIn(gh<_i296.AuthRepository>()));
     gh.factory<_i854.SignOut>(() => _i854.SignOut(gh<_i296.AuthRepository>()));
     gh.factory<_i611.SignUp>(() => _i611.SignUp(gh<_i296.AuthRepository>()));
+    gh.lazySingleton<_i1069.AdoptionRepository>(
+      () => _i824.AdoptionRepositoryImpl(
+        remoteDataSource: gh<_i475.AdoptionRemoteDataSource>(),
+        networkInfo: gh<_i847.NetworkInfo>(),
+      ),
+    );
     gh.factory<_i330.AuthBloc>(
       () => _i330.AuthBloc(
         signIn: gh<_i656.SignIn>(),
@@ -91,11 +116,29 @@ extension GetItInjectableX on _i174.GetIt {
         getCurrentUser: gh<_i338.GetCurrentUser>(),
       ),
     );
+    gh.lazySingleton<_i41.GetShelterRequests>(
+      () => _i41.GetShelterRequests(gh<_i1069.AdoptionRepository>()),
+    );
+    gh.lazySingleton<_i427.SubmitAdoptionRequest>(
+      () => _i427.SubmitAdoptionRequest(gh<_i1069.AdoptionRepository>()),
+    );
+    gh.lazySingleton<_i327.UpdateAdoptionStatus>(
+      () => _i327.UpdateAdoptionStatus(gh<_i1069.AdoptionRepository>()),
+    );
     gh.lazySingleton<_i454.AddPet>(
       () => _i454.AddPet(gh<_i1036.PetRepository>()),
     );
     gh.lazySingleton<_i5.GetPets>(
       () => _i5.GetPets(gh<_i1036.PetRepository>()),
+    );
+    gh.factory<_i776.AdoptionBloc>(
+      () => _i776.AdoptionBloc(gh<_i427.SubmitAdoptionRequest>()),
+    );
+    gh.factory<_i981.ShelterRequestsBloc>(
+      () => _i981.ShelterRequestsBloc(
+        gh<_i41.GetShelterRequests>(),
+        gh<_i327.UpdateAdoptionStatus>(),
+      ),
     );
     gh.factory<_i351.PetBloc>(
       () =>
