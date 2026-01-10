@@ -41,6 +41,13 @@ import 'features/pets/domain/usecases/delete_pet.dart';      // <--- NUEVO
 import 'features/pets/domain/usecases/update_pet.dart';      // <--- NUEVO
 import 'features/pets/presentation/bloc/pet_bloc.dart';
 
+// Imports Maps
+import 'features/maps/data/datasources/maps_remote_data_source.dart';
+import 'features/maps/data/repositories/maps_repository_impl.dart';
+import 'features/maps/domain/repositories/maps_repository.dart';
+import 'features/maps/domain/usecases/get_shelters_usecase.dart';
+import 'features/maps/presentation/bloc/map_bloc.dart';
+
 final getIt = GetIt.instance;
 
 @InjectableInit()
@@ -88,6 +95,11 @@ Future<void> configureDependencies() async {
     () => PetRemoteDataSourceImpl(getIt<SupabaseClient>())
   );
 
+  // Maps
+  getIt.registerLazySingleton<MapsRemoteDataSource>(
+    () => MapsRemoteDataSourceImpl(getIt<SupabaseClient>())
+  );
+
   // =========================================================
   // 3. REGISTRO DE REPOSITORIES (Inyectando NetworkInfo)
   // =========================================================
@@ -116,6 +128,11 @@ Future<void> configureDependencies() async {
     )
   );
 
+  // Maps
+  getIt.registerLazySingleton<MapsRepository>(
+    () => MapsRepositoryImpl(getIt<MapsRemoteDataSource>())
+  );
+
   // =========================================================
   // 4. REGISTRO DE USE CASES
   // =========================================================
@@ -139,6 +156,11 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<GetShelterPets>(() => GetShelterPets(getIt<PetRepository>())); // <--- NUEVO
   getIt.registerLazySingleton<DeletePet>(() => DeletePet(getIt<PetRepository>()));         // <--- NUEVO
   getIt.registerLazySingleton<UpdatePet>(() => UpdatePet(getIt<PetRepository>()));         // <--- NUEVO
+
+  // --- Maps Use Cases ---
+  getIt.registerLazySingleton<GetSheltersUseCase>(
+    () => GetSheltersUseCase(getIt<MapsRepository>())
+  );
 
   // =========================================================
   // 5. REGISTRO DE BLOCS
@@ -185,6 +207,11 @@ Future<void> configureDependencies() async {
       deletePet: getIt<DeletePet>(),
       updatePet: getIt<UpdatePet>(),
     )
+  );
+
+  // Map Bloc
+  getIt.registerFactory<MapBloc>(
+    () => MapBloc(getIt<GetSheltersUseCase>())
   );
   
   // getIt.init(); // Descomentar si usas generación de código automática
