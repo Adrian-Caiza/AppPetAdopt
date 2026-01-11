@@ -13,6 +13,10 @@ abstract class AuthRepository {
     required String password,
     String? displayName,
     required String role, 
+    String? address,      // Nuevo
+    String? phone,        // Nuevo
+    double? latitude,     // Nuevo
+    double? longitude,    // Nuevo
   });
 
   Future<Either<Failure, void>> sendPasswordResetEmail({

@@ -67,69 +67,147 @@ class _MapViewState extends State<MapView> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true, // Permite que se ajuste mejor al contenido
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          width: double.infinity,
+        return Padding(
+          // Añadimos padding inferior para evitar conflictos con la barra de navegación del sistema
+          padding: EdgeInsets.fromLTRB(20, 10, 20, MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Línea decorativa superior
+              // 1. Indicador de arrastre (Barra gris pequeña)
               Center(
                 child: Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
+              const SizedBox(height: 20),
+
+              // 2. Título (Nombre del Refugio)
               Row(
                 children: [
-                  const Icon(Icons.home_work_rounded, color: Colors.teal, size: 30),
-                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.pets, color: Colors.teal, size: 28),
+                  ),
+                  const SizedBox(width: 15),
                   Expanded(
                     child: Text(
                       shelter.name,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (shelter.address != null) ...[
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 10),
+
+              // 3. Dirección
+              if (shelter.address != null && shelter.address!.isNotEmpty) ...[
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.location_on, color: Colors.grey, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(shelter.address!)),
+                    const Icon(Icons.location_on_outlined, color: Colors.grey, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Dirección:",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.black54),
+                          ),
+                          Text(
+                            shelter.address!,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
               ],
-              if (shelter.phone != null) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.phone, color: Colors.grey, size: 20),
-                    const SizedBox(width: 8),
-                    Text(shelter.phone!),
-                  ],
+
+              // 4. TELÉFONO (Agregado aquí)
+              if (shelter.phone != null && shelter.phone!.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone, color: Colors.green, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Teléfono de contacto:",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, color: Colors.green),
+                            ),
+                            Text(
+                              shelter.phone!,
+                              style: const TextStyle(
+                                fontSize: 18, 
+                                fontWeight: FontWeight.w500
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
               ],
+
+              // 5. Botón de Acción
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Aquí podrías navegar al perfil detallado del refugio
                     Navigator.pop(context);
+                    // Aquí podrías navegar al perfil completo del refugio más adelante
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-                  child: const Text('Ver Mascotas del Refugio'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Ver Mascotas Disponibles',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         );

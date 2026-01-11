@@ -42,6 +42,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     String? displayName,
     required String role, // <--- CAMBIO AQUÍ (Recibir)
+    String? address,      // Nuevo
+    String? phone,        // Nuevo
+    double? latitude,     // Nuevo
+    double? longitude,  
   }) async {
     if (!await networkInfo.isConnected) {
       return const Left(NetworkFailure('Sin conexión a internet'));
@@ -53,6 +57,11 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         displayName: displayName,
         role: role, // <--- CAMBIO AQUÍ (Pasar al DataSource)
+        address: address,
+        phone: phone,
+        latitude: latitude,
+        longitude: longitude,
+          
       );
       return Right(user);
     } catch (e) {

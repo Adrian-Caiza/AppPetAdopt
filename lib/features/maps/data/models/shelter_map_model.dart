@@ -17,7 +17,7 @@ class ShelterMapModel extends ShelterMapEntity {
       // Usamos valores por defecto si son nulos para evitar errores, o 0.0
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      phone: json['phone_number'], // Ajusta según tu columna
+      phone: json['phone'], // Ajusta según tu columna
       address: json['address'],    // Ajusta según tu columna
     );
   }

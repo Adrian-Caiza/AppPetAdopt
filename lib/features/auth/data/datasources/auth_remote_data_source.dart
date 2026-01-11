@@ -13,7 +13,11 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
     String? displayName,
-    String? role, 
+    String? role,
+    String? address,
+    String? phone,
+    double? latitude,
+    double? longitude, 
   });
 
   Future<void> sendPasswordResetEmail({
@@ -62,6 +66,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
     String? displayName,
     String? role,
+    String? address,
+    String? phone,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final response = await supabaseClient.auth.signUp(
@@ -70,6 +78,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {
           'display_name': displayName,
           'role': role ?? 'adopter', // Rol por defecto si es nulo
+          'address': address,
+          'phone_number': phone,
+          'latitude': latitude,
+          'longitude': longitude,
         },
       );
 

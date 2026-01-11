@@ -19,6 +19,10 @@ class SignUp implements UseCase<UserEntity, SignUpParams> {
       password: params.password,
       displayName: params.displayName,
       role: params.role, 
+      address: params.address,
+      phone: params.phone,
+      latitude: params.latitude,
+      longitude: params.longitude,
     );
   }
 }
@@ -28,11 +32,19 @@ class SignUpParams {
   final String password;
   final String? displayName;
   final String role; // <--- Asegúrate de tener este campo
+  final String? address;
+  final String? phone;
+  final double? latitude;
+  final double? longitude;
 
   SignUpParams({
     required this.email,
     required this.password,
     this.displayName,
     required this.role, // <--- Y requerirlo en el constructor
+    this.address,
+    this.phone,
+    this.latitude,
+    this.longitude,
   });
 }
