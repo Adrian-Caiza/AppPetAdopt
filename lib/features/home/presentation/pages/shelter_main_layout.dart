@@ -8,6 +8,8 @@ import '../../../pets/presentation/pages/add_pet_page.dart';
 import '../../../pets/presentation/pages/shelter_pets_page.dart'; // La crearemos abajo
 import '../../../adoption/presentation/pages/shelter_requests_page.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../adoption/presentation/bloc/notification_bloc.dart';
+import '../../../adoption/presentation/bloc/shelter_requests_bloc.dart';
 
 class ShelterMainLayout extends StatefulWidget {
   final UserEntity user;
@@ -29,26 +31,69 @@ class _ShelterMainLayoutState extends State<ShelterMainLayout> {
       _buildProfileTab(),
     ];
 
-    return Scaffold(
-      body: SafeArea(child: pages[_currentIndex]),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Inicio'),
-          NavigationDestination(icon: Icon(Icons.pets), label: 'Mascotas'),
-          NavigationDestination(icon: Icon(Icons.notifications), label: 'Solicitudes'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Perfil'),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => getIt<NotificationBloc>()..add(StartNotificationListening()),
+        ),
+        // Si necesitas acceder al Bloc de solicitudes desde aquí para recargarlo:
+        BlocProvider(create: (_) => getIt<ShelterRequestsBloc>()), 
+      ],
+      child: BlocListener<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationTriggered) {
+            // 1. Mostrar Alerta Visual
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.notifications_active, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(state.message)),
+                  ],
+                ),
+                backgroundColor: Colors.teal,
+                behavior: SnackBarBehavior.floating,
+                action: SnackBarAction(
+                  label: 'VER',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    setState(() => _currentIndex = 2); // Navegar a la pestaña de Solicitudes
+                  },
+                ),
+              ),
+            );
+
+            // 2. Recargar datos automáticamente
+            // Esto es clave: refrescamos la lista sin que el usuario haga nada
+            context.read<ShelterRequestsBloc>().add(LoadShelterRequests());
+          }
+        },
+      
+        child: Scaffold(
+          body: SafeArea(child: pages[_currentIndex]),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.dashboard), label: 'Inicio'),
+              NavigationDestination(icon: Icon(Icons.pets), label: 'Mascotas'),
+              NavigationDestination(icon: Icon(Icons.notifications), label: 'Solicitudes'),
+              NavigationDestination(icon: Icon(Icons.person), label: 'Perfil'),
+            ],
+          ),
+          floatingActionButton: _currentIndex == 0 
+              ? FloatingActionButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPetPage())),
+                  child: const Icon(Icons.add),
+                )
+              : null,
+
+        ),
       ),
-      floatingActionButton: _currentIndex == 0 
-          ? FloatingActionButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPetPage())),
-              child: const Icon(Icons.add),
-            )
-          : null,
-    );
+    ); 
   }
+
 
   Widget _buildHomeTab() {
     return Padding(

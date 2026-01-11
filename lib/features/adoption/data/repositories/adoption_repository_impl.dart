@@ -71,4 +71,22 @@ class AdoptionRepositoryImpl implements AdoptionRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Stream<AdoptionRequestEntity> get adoptionStream {
+    return remoteDataSource.listenToAdoptionChanges().map((data) {
+      // Convertimos el JSON crudo a Entidad
+      // Nota: Realtime no devuelve los JOINs (datos de mascotas/usuarios),
+      // solo devuelve los IDs. Devolveremos una entidad parcial para la notificación.
+      return AdoptionRequestEntity(
+        id: data['id'],
+        petId: data['pet_id'],
+        shelterId: data['shelter_id'],
+        adopterId: data['adopter_id'],
+        message: data['message'] ?? 'Nueva actualización',
+        status: data['status'] ?? 'pending',
+        // Los nombres vendrán nulos, pero servirá para disparar la alerta
+      );
+    });
+  }
 }

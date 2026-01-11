@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/adoption_request_model.dart';
@@ -7,6 +8,7 @@ abstract class AdoptionRemoteDataSource {
   Future<List<AdoptionRequestModel>> getShelterRequests(); // Nuevo
   Future<void> updateStatus(String id, String status); // Nuevo
   Future<List<AdoptionRequestModel>> getAdopterRequests();
+  Stream<Map<String, dynamic>> listenToAdoptionChanges();
 }
 
 @LazySingleton(as: AdoptionRemoteDataSource)
@@ -80,5 +82,44 @@ class AdoptionRemoteDataSourceImpl implements AdoptionRemoteDataSource {
       throw Exception('Error al cargar mis solicitudes: $e');
     }
   }
+
+  @override
+  Stream<Map<String, dynamic>> listenToAdoptionChanges() {
+    // 1. Creamos un controlador de Stream. 
+    // Esto actúa como un "tubo": metemos datos por un lado (desde Supabase) 
+    // y salen por el otro (hacia tu Bloc).
+    late StreamController<Map<String, dynamic>> controller;
+    RealtimeChannel? channel;
+
+    controller = StreamController<Map<String, dynamic>>(
+      onListen: () {
+        // 2. Cuando alguien empieza a escuchar el stream, nos conectamos a Supabase
+        channel = client.channel('public:adoption_requests');
+        
+        channel?.onPostgresChanges(
+          event: PostgresChangeEvent.all, // Escuchamos INSERT y UPDATE
+          schema: 'public',
+          table: 'adoption_requests',
+          callback: (payload) {
+            // 3. AQUÍ ES DONDE OCURRE LA MAGIA DEL CALLBACK
+            // Cuando llega un evento, lo metemos al StreamController
+            if (payload.newRecord != null) {
+              controller.add(payload.newRecord!);
+            }
+          },
+        ).subscribe(); // <--- No olvides suscribirte
+      },
+      onCancel: () {
+        // 4. Limpieza: Si el Bloc deja de escuchar, cerramos el canal para ahorrar recursos
+        if (channel != null) {
+          client.removeChannel(channel!);
+        }
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
 }
+
 

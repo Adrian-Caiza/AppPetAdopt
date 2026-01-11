@@ -29,6 +29,8 @@ import 'features/adoption/domain/usecases/update_adoption_status.dart';
 import 'features/adoption/domain/usecases/get_adopter_requests.dart'; // <--- NUEVO
 import 'features/adoption/presentation/bloc/shelter_requests_bloc.dart';
 import 'features/adoption/presentation/bloc/adopter_requests_bloc.dart'; // <--- NUEVO
+import 'features/adoption/domain/usecases/watch_adoption_notifications.dart';
+import 'features/adoption/presentation/bloc/notification_bloc.dart';
 
 // Imports Pets 
 import 'features/pets/data/datasources/pet_remote_data_source.dart';
@@ -149,6 +151,7 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt<AdoptionRepository>()));
   getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt<AdoptionRepository>()));
   getIt.registerLazySingleton<GetAdopterRequests>(() => GetAdopterRequests(getIt<AdoptionRepository>())); // <--- NUEVO
+  getIt.registerLazySingleton<WatchAdoptionNotifications>(() => WatchAdoptionNotifications(getIt<AdoptionRepository>()));
   
   // --- Pets Use Cases ---
   getIt.registerLazySingleton<AddPet>(() => AddPet(getIt<PetRepository>()));
@@ -196,6 +199,10 @@ Future<void> configureDependencies() async {
       getIt<GetAdopterRequests>()
     )
   );
+
+  // Adoption: Notificaciones (NUEVO)
+  getIt.registerFactory<NotificationBloc>(
+    () => NotificationBloc(getIt<WatchAdoptionNotifications>(), getIt<GetCurrentUser>()));
   
   // Pet Bloc (ACTUALIZADO con nuevos use cases)
   getIt.registerFactory<PetBloc>(

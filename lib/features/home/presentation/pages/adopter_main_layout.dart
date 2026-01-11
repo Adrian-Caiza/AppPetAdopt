@@ -8,6 +8,9 @@ import '../../../pets/presentation/pages/pet_feed_page.dart';
 import '../../../maps/presentation/pages/map_page.dart';
 import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../adoption/presentation/pages/adopter_requests_page.dart'; 
+import '../../../adoption/presentation/bloc/notification_bloc.dart';
+import '../../../adoption/presentation/bloc/adopter_requests_bloc.dart';
+import '../../../../injection_container.dart';
 
 class AdopterMainLayout extends StatefulWidget {
   final UserEntity user;
@@ -30,37 +33,88 @@ class _AdopterMainLayoutState extends State<AdopterMainLayout> {
       const AdopterRequestsPage(), // Solicitudes
       _buildProfileTab(),  // Perfil
     ];
+    return MultiBlocProvider(
+      providers: [
+        // 1. Inyectamos el Bloc de Notificaciones
+        BlocProvider(
+          create: (_) => getIt<NotificationBloc>()..add(StartNotificationListening()),
+        ),
+        // 2. (Opcional) Si tienes un Bloc que muestra "Mis Solicitudes", agrégalo aquí
+        BlocProvider(create: (_) => getIt<AdopterRequestsBloc>()..add(LoadAdopterRequests())),
+      ],
+      child: BlocListener<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationTriggered) {
+            // Lógica de colores según si es Aprobado (Verde) o Rechazado (Rojo)
+            final bgColor = state.isSuccess ? Colors.teal : Colors.redAccent;
+            final icon = state.isSuccess ? Icons.check_circle : Icons.cancel;
 
-    return Scaffold(
-      // Usamos IndexedStack para mantener el estado de las páginas (como el scroll o el mapa)
-      body: Builder(
-        builder: (context) {
-          // Si estamos en Mapa (1) o Chat (2), usamos IndexedStack para guardar su estado
-          if (_currentIndex == 1 || _currentIndex == 2) {
-              return IndexedStack(
-                index: _currentIndex,
-                children: pages, // Mantiene todo vivo, pero solo vemos el seleccionado
-              );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(icon, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        state.message,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: bgColor,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4), // Duralo un poco más para que lo lean
+                action: SnackBarAction(
+                  label: 'VER ESTADO',
+                  textColor: Colors.white,
+                  onPressed: () {
+                     // Navegar a la pestaña de "Mis Solicitudes" si la tienes
+                      setState(() => _currentIndex = 1); 
+                  },
+                ),
+              ),
+            );
+
+            // IMPORTANTE: Recargar la lista de solicitudes para ver el cambio de estado
+            context.read<AdopterRequestsBloc>().add(LoadAdopterRequests());
           }
-          
-          // Para Inicio, Solicitudes y Perfil: Devolvemos la página directamente.
-          // Esto fuerza a que se ejecute "initState" y recargue los datos cada vez.
-          return pages[_currentIndex];
         },
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Inicio'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Mapa'),
-          NavigationDestination(icon: Icon(Icons.smart_toy), label: 'IA'),
-          NavigationDestination(icon: Icon(Icons.history), label: 'Solicitudes'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Perfil'),
-        ],
+
+        child: Scaffold(
+          // Usamos IndexedStack para mantener el estado de las páginas (como el scroll o el mapa)
+          body: Builder(
+            builder: (context) {
+              // Si estamos en Mapa (1) o Chat (2), usamos IndexedStack para guardar su estado
+              if (_currentIndex == 1 || _currentIndex == 2) {
+                  return IndexedStack(
+                    index: _currentIndex,
+                    children: pages, // Mantiene todo vivo, pero solo vemos el seleccionado
+                  );
+              }
+              
+              // Para Inicio, Solicitudes y Perfil: Devolvemos la página directamente.
+              // Esto fuerza a que se ejecute "initState" y recargue los datos cada vez.
+              return pages[_currentIndex];
+            },
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.home), label: 'Inicio'),
+              NavigationDestination(icon: Icon(Icons.map), label: 'Mapa'),
+              NavigationDestination(icon: Icon(Icons.smart_toy), label: 'IA'),
+              NavigationDestination(icon: Icon(Icons.history), label: 'Solicitudes'),
+              NavigationDestination(icon: Icon(Icons.person), label: 'Perfil'),
+            ],
+          ),
+        ),
       ),
     );
   }
+  
 
   Widget _buildProfileTab() {
     // Reutiliza el diseño de perfil del refugio o crea uno similar

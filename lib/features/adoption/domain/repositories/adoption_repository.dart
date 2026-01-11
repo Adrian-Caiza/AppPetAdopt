@@ -7,4 +7,5 @@ abstract class AdoptionRepository {
   Future<Either<Failure, List<AdoptionRequestEntity>>> getShelterRequests();
   Future<Either<Failure, void>> updateRequestStatus(String requestId, String newStatus);
   Future<Either<Failure, List<AdoptionRequestEntity>>> getAdopterRequests();
+  Stream<AdoptionRequestEntity> get adoptionStream;
 }
