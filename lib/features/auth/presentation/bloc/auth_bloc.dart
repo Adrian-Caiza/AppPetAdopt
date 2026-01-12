@@ -6,6 +6,7 @@ import '../../domain/usecases/reset_password.dart';
 import '../../domain/usecases/sign_in.dart';
 import '../../domain/usecases/sign_out.dart';
 import '../../domain/usecases/sign_up.dart';
+import '../../domain/usecases/sign_in_with_google.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -13,6 +14,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignIn signIn;
   final SignUp signUp;
+  final SignInWithGoogle signInWithGoogle;
   final ResetPassword resetPassword;
   final SignOut signOut;
   final GetCurrentUser getCurrentUser;
@@ -20,6 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required this.signIn,
     required this.signUp,
+    required this.signInWithGoogle,
     required this.resetPassword,
     required this.signOut,
     required this.getCurrentUser,
@@ -29,6 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResetPasswordRequested>(_onResetPasswordRequested);
     on<SignOutRequested>(_onSignOutRequested);
     on<AuthCheckRequested>(_onAuthCheckRequested);
+    on<GoogleSignInRequested>(_onGoogleSignInRequested);
   }
 
   Future<void> _onSignInRequested(
@@ -122,6 +126,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(const AuthUnauthenticated());
         }
       },
+    );
+  }
+
+  Future<void> _onGoogleSignInRequested(
+    GoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    final result = await signInWithGoogle(NoParams());
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthAuthenticated(user)),
     );
   }
 }

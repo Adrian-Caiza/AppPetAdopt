@@ -61,7 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
         phone: phone,
         latitude: latitude,
         longitude: longitude,
-          
+
       );
       return Right(user);
     } catch (e) {
@@ -108,5 +108,18 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Stream<UserEntity?> get authStateChanges {
     return remoteDataSource.authStateChanges;
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> signInWithGoogle() async {
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure('Sin conexión a internet'));
+    }
+    try {
+      final user = await remoteDataSource.signInWithGoogle();
+      return Right(user);
+    } catch (e) {
+      return Left(AuthFailure(e.toString()));
+    }
   }
 }

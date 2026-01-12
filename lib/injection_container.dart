@@ -17,6 +17,7 @@ import 'features/auth/domain/usecases/sign_out.dart';
 import 'features/auth/domain/usecases/sign_up.dart';
 import 'features/auth/domain/usecases/reset_password.dart'; 
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/domain/usecases/sign_in_with_google.dart';
 
 // Imports Adoption
 import 'features/adoption/data/datasources/adoption_remote_data_source.dart';
@@ -145,6 +146,7 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<SignOut>(() => SignOut(getIt<AuthRepository>()));
   getIt.registerLazySingleton<GetCurrentUser>(() => GetCurrentUser(getIt<AuthRepository>()));
   getIt.registerLazySingleton<ResetPassword>(() => ResetPassword(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<SignInWithGoogle>(() => SignInWithGoogle(getIt<AuthRepository>()));
   
   // --- Adoption Use Cases ---
   getIt.registerLazySingleton<SubmitAdoptionRequest>(() => SubmitAdoptionRequest(getIt<AdoptionRepository>()));
@@ -174,6 +176,7 @@ Future<void> configureDependencies() async {
     () => AuthBloc(
       signIn: getIt<SignIn>(),
       signUp: getIt<SignUp>(),
+      signInWithGoogle: getIt<SignInWithGoogle>(),
       signOut: getIt<SignOut>(),
       getCurrentUser: getIt<GetCurrentUser>(),
       resetPassword: getIt<ResetPassword>(),

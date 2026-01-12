@@ -8,6 +8,7 @@ import '../widgets/loading_overlay.dart';
 import 'register_page.dart';
 import 'reset_password_page.dart';
 import 'welcome_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -200,6 +201,46 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 32),
 
+                        // --- 4. BOTÓN DE INICIO CON GOOGLE ---
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text('O continúa con', style: TextStyle(color: Colors.grey[600])),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
+                            onPressed: isLoading 
+                                ? null 
+                                : () {
+                                    context.read<AuthBloc>().add(GoogleSignInRequested());
+                                  },
+                            icon: SvgPicture.asset(
+                              'assets/icons/google.svg', // Asegúrate de agregar este asset o usa un Icon nativo
+                              height: 24,
+                              width: 24,
+                            ), 
+                            // Si no tienes SVG aún, usa temporalmente: icon: const Icon(Icons.g_translate, color: Colors.red),
+                            label: const Text(
+                              'Google',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                        ),
                         // --- 5. LINK DE REGISTRO ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
