@@ -7,6 +7,7 @@ import '../../domain/usecases/sign_in.dart';
 import '../../domain/usecases/sign_out.dart';
 import '../../domain/usecases/sign_up.dart';
 import '../../domain/usecases/sign_in_with_google.dart';
+import '../../domain/usecases/check_auth_status.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -18,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ResetPassword resetPassword;
   final SignOut signOut;
   final GetCurrentUser getCurrentUser;
+  final CheckAuthStatus checkAuthStatus;
 
   AuthBloc({
     required this.signIn,
@@ -26,13 +28,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.resetPassword,
     required this.signOut,
     required this.getCurrentUser,
+    required this.checkAuthStatus,
   }) : super(const AuthInitial()) {
     on<SignInRequested>(_onSignInRequested);
     on<SignUpRequested>(_onSignUpRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
-    on<SignOutRequested>(_onSignOutRequested);
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<GoogleSignInRequested>(_onGoogleSignInRequested);
+    on<CheckAuthStatusRequested>((event, emit) async {
+      // Opcional: emit(const AuthLoading()); 
+      // A veces no queremos mostrar loading si es solo un chequeo silencioso
+      
+      final result = await checkAuthStatus();
+      
+      result.fold(
+        (failure) => emit(const AuthUnauthenticated()),
+        (user) => emit(AuthAuthenticated(user)),
+      );
+    });
+    on<SignOutRequested>((event, emit) async {
+      await signOut(NoParams());
+      emit(const AuthUnauthenticated());
+    });
   }
 
   Future<void> _onSignInRequested(

@@ -122,4 +122,14 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(AuthFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      await remoteDataSource.updateUserProfile(userId, data);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

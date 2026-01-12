@@ -6,6 +6,10 @@ class UserEntity extends Equatable {
   final String? displayName;
   final String? photoUrl;
   final DateTime? createdAt;
+  final String fullName;
+  final String? phone;
+  final String? address;
+  final String? avatarUrl;
   final Map<String, dynamic>? userMetadata;
 
   const UserEntity({
@@ -14,9 +18,13 @@ class UserEntity extends Equatable {
     this.displayName,
     this.photoUrl,
     this.createdAt,
+    this.fullName = '',
+    this.phone,
+    this.address,
+    this.avatarUrl,
     this.userMetadata,
   });
 
   @override
-  List<Object?> get props => [id, email, displayName, photoUrl, createdAt, userMetadata];
+  List<Object?> get props => [id, email, displayName, photoUrl, createdAt, fullName, phone, address, avatarUrl, userMetadata];
 }

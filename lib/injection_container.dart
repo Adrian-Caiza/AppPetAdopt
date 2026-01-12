@@ -1,11 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/gemini_service.dart';
 import 'core/network/network_info.dart';
-// import 'injection_container.config.dart'; // Si usas build_runner
 
 // Imports Auth
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
@@ -18,6 +18,8 @@ import 'features/auth/domain/usecases/sign_up.dart';
 import 'features/auth/domain/usecases/reset_password.dart'; 
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/domain/usecases/sign_in_with_google.dart';
+import 'features/auth/domain/usecases/update_user.dart';
+import 'features/auth/domain/usecases/check_auth_status.dart';
 
 // Imports Adoption
 import 'features/adoption/data/datasources/adoption_remote_data_source.dart';
@@ -27,9 +29,9 @@ import 'features/adoption/domain/usecases/submit_adoption_request.dart';
 import 'features/adoption/presentation/bloc/adoption_bloc.dart';
 import 'features/adoption/domain/usecases/get_shelter_requests.dart';
 import 'features/adoption/domain/usecases/update_adoption_status.dart';
-import 'features/adoption/domain/usecases/get_adopter_requests.dart'; // <--- NUEVO
+import 'features/adoption/domain/usecases/get_adopter_requests.dart';
 import 'features/adoption/presentation/bloc/shelter_requests_bloc.dart';
-import 'features/adoption/presentation/bloc/adopter_requests_bloc.dart'; // <--- NUEVO
+import 'features/adoption/presentation/bloc/adopter_requests_bloc.dart';
 import 'features/adoption/domain/usecases/watch_adoption_notifications.dart';
 import 'features/adoption/presentation/bloc/notification_bloc.dart';
 
@@ -39,9 +41,9 @@ import 'features/pets/data/repositories/pet_repository_impl.dart';
 import 'features/pets/domain/repositories/pet_repository.dart';
 import 'features/pets/domain/usecases/add_pet.dart';
 import 'features/pets/domain/usecases/get_pets.dart';
-import 'features/pets/domain/usecases/get_shelter_pets.dart'; // <--- NUEVO
-import 'features/pets/domain/usecases/delete_pet.dart';      // <--- NUEVO
-import 'features/pets/domain/usecases/update_pet.dart';      // <--- NUEVO
+import 'features/pets/domain/usecases/get_shelter_pets.dart';
+import 'features/pets/domain/usecases/delete_pet.dart';
+import 'features/pets/domain/usecases/update_pet.dart';
 import 'features/pets/presentation/bloc/pet_bloc.dart';
 
 // Imports Maps
@@ -55,22 +57,29 @@ final getIt = GetIt.instance;
 
 @InjectableInit()
 Future<void> configureDependencies() async {
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: AppConstants.supabaseUrl,
-    anonKey: AppConstants.supabaseAnonKey,
-    authOptions: const FlutterAuthClientOptions(
-      authFlowType: AuthFlowType.implicit, 
-    ),
-  );
+  
+  // 1. LIMPIEZA DE MEMORIA (Crucial para evitar errores en Hot Restart)
+  await getIt.reset(); 
+
+  // 2. Inicializar Supabase
+  try {
+    await Supabase.initialize(
+      url: AppConstants.supabaseUrl,
+      anonKey: AppConstants.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.implicit, 
+      ),
+    );
+  } catch (e) {
+    // Ignoramos si ya está inicializado
+  }
 
   // =========================================================
-  // 1. REGISTRO DE DEPENDENCIAS BÁSICAS Y EXTERNAS
+  // 3. REGISTRO DE DEPENDENCIAS BÁSICAS Y EXTERNAS
   // =========================================================
   
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
   
-  // NetworkInfo (Debe ir antes que los Repositories)
   getIt.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(getIt<Connectivity>())
   );
@@ -79,13 +88,25 @@ Future<void> configureDependencies() async {
   
   getIt.registerLazySingleton<GeminiService>(() => GeminiService());
 
+  // CONFIGURACIÓN DE GOOGLE SIGN IN
+  // IMPORTANTE: Reemplaza 'TU_WEB_CLIENT_ID...' con tu ID real
+  getIt.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn(
+    serverClientId: 'TU_WEB_CLIENT_ID.apps.googleusercontent.com', 
+    scopes: ['email', 'profile'],
+  ));
+
   // =========================================================
-  // 2. REGISTRO DE DATA SOURCES
+  // 4. REGISTRO DE DATA SOURCES
   // =========================================================
   
-  // Auth
+  // Auth Data Source (Solo registrado UNA vez)
   getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(getIt<SupabaseClient>())
+    () => AuthRemoteDataSourceImpl(
+      getIt<SupabaseClient>(),
+      // Si actualizaste el constructor de AuthRemoteDataSourceImpl para recibir GoogleSignIn,
+      // descomenta la siguiente línea:
+      // googleSignIn: getIt<GoogleSignIn>(), 
+    )
   );
   
   // Adoption
@@ -104,7 +125,7 @@ Future<void> configureDependencies() async {
   );
 
   // =========================================================
-  // 3. REGISTRO DE REPOSITORIES (Inyectando NetworkInfo)
+  // 5. REGISTRO DE REPOSITORIES
   // =========================================================
   
   // Auth
@@ -137,7 +158,7 @@ Future<void> configureDependencies() async {
   );
 
   // =========================================================
-  // 4. REGISTRO DE USE CASES
+  // 6. REGISTRO DE USE CASES
   // =========================================================
   
   // --- Auth Use Cases ---
@@ -148,19 +169,23 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<ResetPassword>(() => ResetPassword(getIt<AuthRepository>()));
   getIt.registerLazySingleton<SignInWithGoogle>(() => SignInWithGoogle(getIt<AuthRepository>()));
   
+  // Perfil y Estado
+  getIt.registerLazySingleton<CheckAuthStatus>(() => CheckAuthStatus(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<UpdateUser>(() => UpdateUser(getIt<AuthRepository>()));
+  
   // --- Adoption Use Cases ---
   getIt.registerLazySingleton<SubmitAdoptionRequest>(() => SubmitAdoptionRequest(getIt<AdoptionRepository>()));
   getIt.registerLazySingleton<GetShelterRequests>(() => GetShelterRequests(getIt<AdoptionRepository>()));
   getIt.registerLazySingleton<UpdateAdoptionStatus>(() => UpdateAdoptionStatus(getIt<AdoptionRepository>()));
-  getIt.registerLazySingleton<GetAdopterRequests>(() => GetAdopterRequests(getIt<AdoptionRepository>())); // <--- NUEVO
+  getIt.registerLazySingleton<GetAdopterRequests>(() => GetAdopterRequests(getIt<AdoptionRepository>()));
   getIt.registerLazySingleton<WatchAdoptionNotifications>(() => WatchAdoptionNotifications(getIt<AdoptionRepository>()));
   
   // --- Pets Use Cases ---
   getIt.registerLazySingleton<AddPet>(() => AddPet(getIt<PetRepository>()));
   getIt.registerLazySingleton<GetPets>(() => GetPets(getIt<PetRepository>()));
-  getIt.registerLazySingleton<GetShelterPets>(() => GetShelterPets(getIt<PetRepository>())); // <--- NUEVO
-  getIt.registerLazySingleton<DeletePet>(() => DeletePet(getIt<PetRepository>()));         // <--- NUEVO
-  getIt.registerLazySingleton<UpdatePet>(() => UpdatePet(getIt<PetRepository>()));         // <--- NUEVO
+  getIt.registerLazySingleton<GetShelterPets>(() => GetShelterPets(getIt<PetRepository>()));
+  getIt.registerLazySingleton<DeletePet>(() => DeletePet(getIt<PetRepository>()));
+  getIt.registerLazySingleton<UpdatePet>(() => UpdatePet(getIt<PetRepository>()));
 
   // --- Maps Use Cases ---
   getIt.registerLazySingleton<GetSheltersUseCase>(
@@ -168,7 +193,7 @@ Future<void> configureDependencies() async {
   );
 
   // =========================================================
-  // 5. REGISTRO DE BLOCS
+  // 7. REGISTRO DE BLOCS
   // =========================================================
   
   // Auth Bloc
@@ -180,15 +205,15 @@ Future<void> configureDependencies() async {
       signOut: getIt<SignOut>(),
       getCurrentUser: getIt<GetCurrentUser>(),
       resetPassword: getIt<ResetPassword>(),
+      checkAuthStatus: getIt<CheckAuthStatus>(),
     ),
   );
   
-  // Adoption: Crear solicitud
+  // Adoption Blocs
   getIt.registerFactory<AdoptionBloc>(
     () => AdoptionBloc(getIt<SubmitAdoptionRequest>())
   );
   
-  // Adoption: Refugio Dashboard
   getIt.registerFactory<ShelterRequestsBloc>(
     () => ShelterRequestsBloc(
       getIt<GetShelterRequests>(),
@@ -196,23 +221,24 @@ Future<void> configureDependencies() async {
     )
   );
 
-  // Adoption: Adoptante Mis Solicitudes (NUEVO)
   getIt.registerFactory<AdopterRequestsBloc>(
     () => AdopterRequestsBloc(
       getIt<GetAdopterRequests>()
     )
   );
 
-  // Adoption: Notificaciones (NUEVO)
   getIt.registerFactory<NotificationBloc>(
-    () => NotificationBloc(getIt<WatchAdoptionNotifications>(), getIt<GetCurrentUser>()));
+    () => NotificationBloc(
+      getIt<WatchAdoptionNotifications>(), 
+      getIt<GetCurrentUser>()
+    )
+  );
   
-  // Pet Bloc (ACTUALIZADO con nuevos use cases)
+  // Pet Bloc
   getIt.registerFactory<PetBloc>(
     () => PetBloc(
       addPet: getIt<AddPet>(),
       getPets: getIt<GetPets>(),
-      // Inyectamos los nuevos casos de uso que agregamos al constructor del Bloc
       getShelterPets: getIt<GetShelterPets>(),
       deletePet: getIt<DeletePet>(),
       updatePet: getIt<UpdatePet>(),
@@ -223,6 +249,4 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<MapBloc>(
     () => MapBloc(getIt<GetSheltersUseCase>())
   );
-  
-  // getIt.init(); // Descomentar si usas generación de código automática
 }

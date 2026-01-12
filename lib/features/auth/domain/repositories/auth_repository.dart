@@ -30,4 +30,6 @@ abstract class AuthRepository {
   Stream<UserEntity?> get authStateChanges;
 
   Future<Either<Failure, UserEntity>> signInWithGoogle();
+
+  Future<Either<Failure, void>> updateUserProfile(String userId, Map<String, dynamic> data);
 }

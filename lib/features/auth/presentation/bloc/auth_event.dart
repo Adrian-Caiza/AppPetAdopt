@@ -57,3 +57,4 @@ class ResetPasswordRequested extends AuthEvent {
 }
 
 class GoogleSignInRequested extends AuthEvent {}
+class CheckAuthStatusRequested extends AuthEvent {} 

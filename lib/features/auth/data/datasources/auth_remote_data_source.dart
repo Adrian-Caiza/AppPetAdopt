@@ -34,6 +34,8 @@ abstract class AuthRemoteDataSource {
   Stream<UserModel?> get authStateChanges;
 
   Future<UserModel> signInWithGoogle();
+
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data);
 }
 
 @LazySingleton(as: AuthRemoteDataSource)
@@ -150,6 +152,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (user == null) return null;
       return UserModel.fromSupabaseUser(user);
     });
+  }
+
+  @override
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      await supabaseClient.from('profiles').update(data).eq('id', userId);
+    } catch (e) {
+      throw Exception('Error actualizando perfil: $e');
+    }
   }
 
   @override
