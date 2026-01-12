@@ -38,6 +38,25 @@
                 <data android:scheme="loginpro"/>
             </intent-filter>
 
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <!-- Este DEBE coincidir con redirectTo en tu código -->
+                <data 
+                    android:scheme="loginpro"
+                    android:host="auth-callback"/>
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data 
+                    android:scheme="loginpro"
+                    android:host="verified"/>
+            </intent-filter>
+
             <!-- Supabase callback -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>

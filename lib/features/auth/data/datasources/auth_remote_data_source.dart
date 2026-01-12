@@ -155,33 +155,78 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
 Future<UserModel> signInWithGoogle() async {
   try {
-    print('=== INICIANDO GOOGLE SIGN-IN CON SUPABASE ===');
+    print('🚀 Iniciando Google Sign-In (OAuthProvider.google)...');
     
-    // OPCIÓN 1: Usar OAuthProvider.google (si está disponible)
+    // Configuración CORRECTA para Implicit Flow
     await supabaseClient.auth.signInWithOAuth(
-      OAuthProvider.google,
-      redirectTo: 'loginpro://auth-callback',
+      OAuthProvider.google, // ✅ Esto funciona en tu versión
+      redirectTo: 'https://web-pet-adopt.netlify.app/verify-email.html',
     );
     
-    // Esperamos un momento para que se complete el flujo OAuth
-    await Future.delayed(const Duration(seconds: 3));
+    print('✅ Redirigiendo a Google...');
+    print('📱 Con Implicit Flow:');
+    print('   1. Te redirigirá a nuestra página Netlify');
+    print('   2. La página procesará los tokens');
+    print('   3. Te redirigirá de vuelta a la app automáticamente');
     
-    // Verificamos si hay un usuario autenticado
+    // Espera inteligente para Implicit Flow
+    return await _waitForImplicitFlow();
+    
+  } on AuthException catch (e) {
+    print('🔴 Error de autenticación: ${e.message}');
+    throw Exception('Error de Google: ${e.message}');
+  } catch (e, stack) {
+    print('🔴 Error inesperado: $e');
+    print('Stack: $stack');
+    throw Exception('Error al conectar con Google: $e');
+  }
+}
+
+Future<UserModel> _waitForImplicitFlow() async {
+  print('⏳ Esperando procesamiento de Implicit Flow...');
+  print('   Esto puede tomar hasta 60 segundos');
+  print('   Por favor NO cierres la app');
+  
+  const totalWait = 60; // 60 segundos máximo
+  int secondsWaited = 0;
+  
+  while (secondsWaited < totalWait) {
+    await Future.delayed(const Duration(seconds: 1));
+    secondsWaited++;
+    
     final currentUser = supabaseClient.auth.currentUser;
     
-    if (currentUser == null) {
-      throw Exception('No se pudo iniciar sesión con Google - Usuario nulo');
+    if (currentUser != null) {
+      print('🎉 ¡AUTENTICACIÓN EXITOSA!');
+      print('   Tiempo: $secondsWaited segundos');
+      print('   Usuario: ${currentUser.email}');
+      print('   ID: ${currentUser.id}');
+      return UserModel.fromSupabaseUser(currentUser);
     }
     
-    print('Usuario autenticado: ${currentUser.email}');
-    return UserModel.fromSupabaseUser(currentUser);
-    
-  } catch (e, stack) {
-    print('=== ERROR EN GOOGLE SIGN-IN ===');
-    print('Error: $e');
-    print('Stack trace: $stack');
-    throw Exception('Error en Google Sign-In: $e');
+    // Mostrar progreso
+    if (secondsWaited % 10 == 0) {
+      print('   ⏳ $secondsWaited/$totalWait segundos...');
+      if (secondsWaited >= 20) {
+        print('   💡 ¿Ya autorizaste con Google en el navegador?');
+        print('   💡 ¿La página te redirigió de vuelta a la app?');
+      }
+    }
   }
+  
+  print('⚠️ Timeout después de $totalWait segundos');
+  print('   Esto es NORMAL si:');
+  print('   1. No completaste la autorización en el navegador');
+  print('   2. No volviste a la app después de autorizar');
+  print('   3. Hay problemas con los deep links');
+  
+  throw Exception(
+    'Por favor:\n'
+    '1. Completa la autorización con Google en el navegador\n'
+    '2. Espera a que te redirija de vuelta a la app\n'
+    '3. Si no se abre automáticamente, vuelve MANUALMENTE\n'
+    '4. Tu sesión se activará automáticamente'
+  );
 }
 }
 

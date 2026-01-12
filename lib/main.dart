@@ -10,6 +10,9 @@ import 'features/auth/presentation/pages/welcome_page.dart';
 import 'injection_container.dart';
 import 'core/network/network_info.dart';
 
+
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -56,6 +59,8 @@ void main() async {
     ));
   }
 }
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

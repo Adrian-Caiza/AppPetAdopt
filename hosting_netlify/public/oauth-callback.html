@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetAdopt - Autenticación Google</title>
+    <style>
+        /* Mantén tus estilos actuales */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+               background: linear-gradient(135deg, #0D9488 0%, #0f766e 100%); 
+               min-height: 100vh; display: flex; align-items: center; 
+               justify-content: center; padding: 20px; }
+        .container { background: white; border-radius: 20px; padding: 48px; 
+                     max-width: 500px; width: 100%; 
+                     box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+        .icon { width: 80px; height: 80px; margin: 0 auto 24px; 
+                background: #f0f4ff; border-radius: 50%; 
+                display: flex; align-items: center; justify-content: center; }
+        .icon.google { background: #f8f9fa; border: 2px solid #4285F4; }
+        h1 { color: #2d3436; font-size: 28px; margin-bottom: 16px; }
+        p { color: #636e72; font-size: 16px; line-height: 1.6; margin-bottom: 32px; }
+        .button { background: #0D9488; color: white; border: none; 
+                  padding: 16px 32px; border-radius: 12px; font-size: 16px; 
+                  font-weight: 600; cursor: pointer; display: inline-block; 
+                  transition: background 0.3s ease; }
+        .button:hover { background: #0f766e; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #0D9488; 
+                  border-radius: 50%; width: 40px; height: 40px; 
+                  animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .debug { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 8px; 
+                 padding: 12px; margin: 16px 0; font-size: 12px; 
+                 text-align: left; font-family: monospace; max-height: 150px; 
+                 overflow-y: auto; }
+        .success { color: #0D9488; }
+        .error { color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ESTADO INICIAL -->
+        <div id="loading">
+            <div class="icon">
+                <div class="loader"></div>
+            </div>
+            <h1>Conectando con Google...</h1>
+            <p id="loading-text">Procesando tu autenticación.</p>
+        </div>
+
+        <!-- ÉXITO GOOGLE -->
+        <div id="google-success" class="hidden">
+            <div class="icon google">
+                <span style="font-size: 48px;">✅</span>
+            </div>
+            <h1 class="success">¡Google conectado!</h1>
+            <p>Tu cuenta de Google ha sido vinculada exitosamente.</p>
+            <p><small>Redirigiendo a la aplicación...</small></p>
+            <div class="debug" id="debug-info"></div>
+            <button class="button" onclick="redirectToApp()">Abrir aplicación ahora</button>
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                Si no se abre automáticamente en <span id="countdown">5</span> segundos,<br>
+                usa el botón de arriba o vuelve manualmente a la app.
+            </p>
+        </div>
+
+        <!-- ERROR -->
+        <div id="error" class="hidden">
+            <div class="icon">
+                <span style="font-size: 48px;">❌</span>
+            </div>
+            <h1 class="error">Error en la conexión</h1>
+            <p id="error-message"></p>
+            <button class="button" onclick="retryAuth()">Reintentar</button>
+            <button class="button" onclick="redirectToApp()" style="background: #666; margin-left: 10px;">
+                Volver a la app
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN
+        // ============================================
+        const APP_DEEP_LINK = 'loginpro://auth-callback';
+        const COUNTDOWN_SECONDS = 5;
+        const DEBUG = true;
+
+        // ============================================
+        // DETECTAR TIPO DE FLUJO
+        // ============================================
+        function detectAuthFlow() {
+            console.log('🔍 Analizando URL...');
+            
+            const url = new URL(window.location.href);
+            const hash = url.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const searchParams = new URLSearchParams(url.search);
+            
+            // DEBUG INFO
+            if (DEBUG) {
+                console.log('URL completa:', url.href);
+                console.log('Hash:', hash);
+                console.log('Hash params:', Object.fromEntries(params));
+                console.log('Search params:', Object.fromEntries(searchParams));
+            }
+            
+            // 1. VERIFICAR ERRORES
+            const error = params.get('error') || searchParams.get('error');
+            const errorDesc = params.get('error_description') || searchParams.get('error_description');
+            
+            if (error) {
+                console.error('❌ Error detectado:', error);
+                showError(errorDesc || `Error: ${error}`);
+                return;
+            }
+            
+            // 2. DETECTAR GOOGLE OAUTH (IMPLICIT FLOW)
+            // Google OAuth devuelve tokens en el HASH (#)
+            const hasGoogleTokens = params.has('access_token') && params.has('refresh_token');
+            const provider = params.get('provider') || searchParams.get('provider');
+            
+            if (DEBUG) {
+                console.log('Tiene access_token:', params.has('access_token'));
+                console.log('Tiene refresh_token:', params.has('refresh_token'));
+                console.log('Provider:', provider);
+                console.log('Es Google OAuth:', hasGoogleTokens || provider === 'google');
+            }
+            
+            if (hasGoogleTokens || provider === 'google') {
+                console.log('✅ Detectado Google OAuth con Implicit Flow');
+                showDebugInfo(params);
+                processGoogleOAuth();
+                return;
+            }
+            
+            // 3. DETECTAR VERIFICACIÓN DE EMAIL (PKCE)
+            const hasCode = searchParams.has('code') || params.has('code');
+            const hasToken = searchParams.has('token') || params.has('token');
+            
+            if (hasCode || hasToken) {
+                console.log('✅ Detectado flujo de verificación de email');
+                // Para email verification, redirigir directamente
+                redirectToApp();
+                return;
+            }
+            
+            // 4. NO SE DETECTÓ NINGÚN FLUJO VÁLIDO
+            console.warn('⚠️ No se detectó flujo válido');
+            showError('No se recibieron datos de autenticación válidos.');
+        }
+
+        // ============================================
+        // PROCESAR GOOGLE OAUTH
+        // ============================================
+        function processGoogleOAuth() {
+            console.log('🔄 Procesando Google OAuth...');
+            
+            // Ocultar loading, mostrar éxito
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('google-success').classList.remove('hidden');
+            
+            // Actualizar texto
+            document.getElementById('loading-text').textContent = 
+                'Google OAuth detectado - procesando tokens...';
+            
+            // Iniciar cuenta regresiva
+            startCountdown();
+        }
+
+        // ============================================
+        // FUNCIONES DE INTERFAZ
+        // ============================================
+        function showDebugInfo(params) {
+            if (!DEBUG) return;
+            
+            const debugDiv = document.getElementById('debug-info');
+            const entries = Array.from(params.entries());
+            
+            let html = '<strong>Tokens recibidos:</strong><br>';
+            entries.forEach(([key, value]) => {
+                const displayValue = key.includes('token') 
+                    ? value.substring(0, 20) + '...' 
+                    : value;
+                html += `${key}: <code>${displayValue}</code><br>`;
+            });
+            
+            debugDiv.innerHTML = html;
+        }
+
+        function showError(message) {
+            console.error('Mostrando error:', message);
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        // ============================================
+        // REDIRECCIÓN
+        // ============================================
+        function redirectToApp() {
+            console.log('🚀 Redirigiendo a la app...');
+            
+            // Pasar TODOS los parámetros a la app
+            const url = new URL(window.location.href);
+            const deepLink = APP_DEEP_LINK + url.search + url.hash;
+            
+            console.log('Deep link:', deepLink.substring(0, 100) + '...');
+            
+            // Intentar abrir la app
+            window.location.href = deepLink;
+            
+            // Fallback después de 1 segundo
+            setTimeout(() => {
+                if (!document.hidden) {
+                    console.log('⚠️ Fallback: app no se abrió');
+                    showFallbackInstructions();
+                }
+            }, 1000);
+        }
+
+        function showFallbackInstructions() {
+            document.body.innerHTML = `
+                <div class="container">
+                    <div class="icon google">
+                        <span style="font-size: 48px;">📱</span>
+                    </div>
+                    <h1>¡Autenticación Exitosa! 🎉</h1>
+                    <p><strong>Por favor:</strong></p>
+                    <ol style="text-align: left; margin: 20px 0; color: #636e72;">
+                        <li><strong>Cierra esta ventana del navegador</strong></li>
+                        <li>Vuelve a la aplicación PetAdopt</li>
+                        <li>Verás que ya estás autenticado con Google</li>
+                    </ol>
+                    <p><small>Si no funciona, reinicia la aplicación.</small></p>
+                    <button class="button" onclick="window.close()">Cerrar ventana</button>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // CUENTA REGRESIVA
+        // ============================================
+        function startCountdown() {
+            let seconds = COUNTDOWN_SECONDS;
+            const countdownEl = document.getElementById('countdown');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    redirectToApp();
+                }
+            }, 1000);
+        }
+
+        // ============================================
+        // REINTENTAR
+        // ============================================
+        function retryAuth() {
+            console.log('🔄 Reintentando...');
+            // Limpiar URL y recargar
+            window.location.href = window.location.origin + window.location.pathname;
+        }
+
+        // ============================================
+        // DETECTAR CUANDO SE ABRE LA APP
+        // ============================================
+        window.addEventListener('blur', () => {
+            console.log('📱 Ventana perdió foco - app se abrió');
+            // Ocultar todo
+            setTimeout(() => {
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: white;">
+                        <h2>¡Redirigiendo! ✅</h2>
+                        <p>Si no se abre, cierra esta ventana.</p>
+                    </div>
+                `;
+            }, 500);
+        });
+
+        // ============================================
+        // INICIAR AL CARGAR
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Página de autenticación lista');
+            detectAuthFlow();
+        });
+    </script>
+</body>
+</html>
