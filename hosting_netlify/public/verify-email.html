@@ -3,124 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Email - PetAdopt</title>
+    <title>PetAdopt - Autenticación</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 48px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-
-        .icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 24px;
-            background: #f0f4ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon.success {
-            background: #d1f4e0;
-        }
-
-        .icon.error {
-            background: #ffe0e0;
-        }
-
-        .icon svg {
-            width: 48px;
-            height: 48px;
-        }
-
-        h1 {
-            color: #2d3436;
-            font-size: 28px;
-            margin-bottom: 16px;
-        }
-
-        p {
-            color: #636e72;
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 32px;
-        }
-
-        .button {
-            background: #6C5CE7;
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: background 0.3s ease;
-        }
-
-        .button:hover {
-            background: #5f4fd1;
-        }
-
-        .button:disabled {
-            background: #b2bec3;
-            cursor: not-allowed;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #6C5CE7;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .hidden {
-            display: none;
-        }
+        /* ESTILOS EXISTENTES (MANTENER IGUAL) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { background: white; border-radius: 20px; padding: 48px; max-width: 500px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+        .icon { width: 80px; height: 80px; margin: 0 auto 24px; background: #f0f4ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .icon.success { background: #d1f4e0; }
+        .icon.error { background: #ffe0e0; }
+        .icon.google { background: #f8f9fa; border: 1px solid #dadce0; }
+        .icon svg { width: 48px; height: 48px; }
+        h1 { color: #2d3436; font-size: 28px; margin-bottom: 16px; }
+        p { color: #636e72; font-size: 16px; line-height: 1.6; margin-bottom: 32px; }
+        .button { background: #6C5CE7; color: white; border: none; padding: 16px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.3s ease; }
+        .button:hover { background: #5f4fd1; }
+        .button:disabled { background: #b2bec3; cursor: not-allowed; }
+        .button-google { background: white; color: #3c4043; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; }
+        .button-google:hover { background: #f8f9fa; border-color: #c8ccd0; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #6C5CE7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .google-icon { width: 20px; height: 20px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="%23EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="%2334A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="%234285F4" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="%23FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>') no-repeat center; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .token-info { background: #f8f9fa; border: 1px solid #dadce0; border-radius: 8px; padding: 12px; margin: 16px 0; font-size: 12px; text-align: left; font-family: monospace; max-height: 100px; overflow-y: auto; }
+        .token-info code { color: #0D9488; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- ESTADO DE CARGA INICIAL -->
         <div id="loading" class="loading-state">
             <div class="icon">
                 <div class="loader"></div>
             </div>
-            <h1>Verificando tu email...</h1>
-            <p>Por favor espera mientras confirmamos tu cuenta.</p>
+            <h1>Procesando autenticación...</h1>
+            <p id="loading-message">Por favor espera mientras verificamos tu cuenta.</p>
         </div>
 
+        <!-- ÉXITO EN VERIFICACIÓN DE EMAIL (PKCE) -->
         <div id="success" class="hidden">
             <div class="icon success">
                 <svg fill="#00D2A1" viewBox="0 0 24 24">
@@ -128,10 +48,12 @@
                 </svg>
             </div>
             <h1>¡Email verificado!</h1>
-            <p>Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión en la aplicación.</p>
+            <p>Tu cuenta ha sido verificada correctamente.</p>
+            <p><small>Este flujo usa PKCE para mayor seguridad.</small></p>
             <button class="button" onclick="openApp()">Abrir aplicación</button>
         </div>
 
+        <!-- ERROR EN VERIFICACIÓN -->
         <div id="error" class="hidden">
             <div class="icon error">
                 <svg fill="#FF6B6B" viewBox="0 0 24 24">
@@ -139,83 +61,287 @@
                 </svg>
             </div>
             <h1>Error en la verificación</h1>
-            <p id="error-message">Hubo un problema al verificar tu email. El enlace puede haber expirado.</p>
+            <p id="error-message">Hubo un problema al procesar tu autenticación.</p>
             <button class="button" onclick="openApp()">Ir a la aplicación</button>
+        </div>
+        
+        <!-- SECCIÓN ESPECÍFICA PARA GOOGLE OAUTH CON IMPLICIT FLOW -->
+        <div id="google-oauth" class="hidden">
+            <div class="icon google">
+                <div class="google-icon"></div>
+            </div>
+            <h1>¡Google conectado! ✅</h1>
+            <p>Tu cuenta de Google ha sido vinculada exitosamente.</p>
+            
+            <!-- Información de depuración (solo en desarrollo) -->
+            <div id="debug-info" class="token-info hidden">
+                <strong>Tokens recibidos (Implicit Flow):</strong>
+                <div id="tokens-display"></div>
+            </div>
+            
+            <p><small>Flujo Implicit Flow - Redirigiendo automáticamente...</small></p>
+            <button class="button" onclick="openApp()">Continuar ahora</button>
+            <div style="margin-top: 16px; font-size: 14px; color: #666;">
+                <p>⏳ Redirección automática en <span id="countdown">3</span> segundos...</p>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN FALLBACK PARA CUANDO NO SE ABRE LA APP -->
+        <div id="fallback" class="hidden">
+            <div class="icon google">
+                <div class="google-icon"></div>
+            </div>
+            <h1>¡Listo! 🎉</h1>
+            <p>Tu autenticación con Google ha sido exitosa.</p>
+            <p><strong>Por favor:</strong></p>
+            <ol style="text-align: left; margin: 20px 0; color: #636e72;">
+                <li>Cierra esta ventana del navegador</li>
+                <li>Vuelve a la aplicación PetAdopt</li>
+                <li>Verás que ya estás autenticado</li>
+            </ol>
+            <p><small>Si no funciona, reinicia la aplicación.</small></p>
+            <button class="button" onclick="window.close()">Cerrar ventana</button>
         </div>
     </div>
 
     <script>
-        async function verifyEmail() {
-            console.log("Iniciando verificación...");
+        // ============================================
+        // CONFIGURACIÓN PARA IMPLICIT FLOW
+        // ============================================
+        
+        // Modo depuración (mostrar tokens en consola)
+        const DEBUG_MODE = true;
+        
+        // Tiempo de redirección automática (segundos)
+        const REDIRECT_DELAY = 3;
+        
+        // Deep link de la app
+        const APP_DEEP_LINK = 'loginpro://auth-callback';
+
+        // ============================================
+        // FUNCIÓN PRINCIPAL - DETECTA EL FLUJO
+        // ============================================
+        async function processAuth() {
+            console.log('🔍 Iniciando procesamiento de autenticación...');
             
-            // 1. Obtener todos los parámetros posibles (Query ? y Hash #)
+            // 1. Obtener parámetros
             const queryParams = new URLSearchParams(window.location.search);
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            if (DEBUG_MODE) {
+                console.log('📊 Query Params:', Object.fromEntries(queryParams));
+                console.log('📊 Hash Params:', Object.fromEntries(hashParams));
+                console.log('🔗 URL completa:', window.location.href);
+            }
 
-            // Imprimir para depuración (puedes verlo en la consola del navegador si hay problemas)
-            console.log("Query Params:", Object.fromEntries(queryParams));
-            console.log("Hash Params:", Object.fromEntries(hashParams));
-
-            // 2. Verificar errores reportados por Supabase
+            // 2. Verificar errores
             const error = queryParams.get('error') || hashParams.get('error');
             const errorDescription = queryParams.get('error_description') || hashParams.get('error_description');
-
+            
             if (error) {
-                showError(errorDescription ? errorDescription.replace(/\+/g, ' ') : 'Error desconocido en la verificación');
+                const errorMsg = errorDescription ? errorDescription.replace(/\+/g, ' ') : 'Error desconocido';
+                console.error('❌ Error recibido:', errorMsg);
+                showError(errorMsg);
                 return;
             }
 
-            // 3. Buscar CUALQUIER indicador de éxito
-            // Supabase puede enviar: code (PKCE), access_token (Implicit), token_hash, o type=signup/recovery
+            // 3. DETECTAR IMPLICIT FLOW (TOKENS EN HASH)
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const expiresIn = hashParams.get('expires_in');
+            const tokenType = hashParams.get('token_type');
+            const provider = hashParams.get('provider');
+            
+            // En Implicit Flow, los tokens vienen en el HASH (#)
+            const isImplicitFlow = accessToken && refreshToken;
+            
+            if (DEBUG_MODE) {
+                console.log('🔑 Access Token presente:', !!accessToken);
+                console.log('🔑 Refresh Token presente:', !!refreshToken);
+                console.log('🔄 Es Implicit Flow:', isImplicitFlow);
+                console.log('👤 Provider:', provider);
+            }
+
+            // 4. SI ES IMPLICIT FLOW (GOOGLE OAUTH)
+            if (isImplicitFlow) {
+                console.log('✅ Detectado Implicit Flow para Google OAuth');
+                processImplicitFlow(accessToken, refreshToken, provider, hashParams);
+                return;
+            }
+
+            // 5. SI ES PKCE FLOW (VERIFICACIÓN DE EMAIL)
             const code = queryParams.get('code');
             const token = queryParams.get('token');
             const tokenHash = queryParams.get('token_hash');
-            const accessToken = hashParams.get('access_token');
             const type = queryParams.get('type') || hashParams.get('type');
-
-            // Si existe cualquiera de estos, asumimos que Supabase nos envió aquí correctamente
-            if (code || token || tokenHash || accessToken || type === 'signup' || type === 'recovery' || type === 'invite') {
-                console.log("Credenciales encontradas. Éxito.");
-                
-                // Pequeña espera visual
-                setTimeout(() => {
-                    showSuccess();
-                }, 1000);
-            } else {
-                // Caso borde: El usuario abrió el enlace sin parámetros
-                console.error("No se encontraron credenciales");
-                // Muestra la URL actual en el mensaje de error para ayudar a depurar
-                showError('No se encontraron credenciales. URL actual: ' + window.location.href);
+            
+            if (code || token || tokenHash || type === 'signup' || type === 'recovery') {
+                console.log('✅ Detectado PKCE Flow para verificación de email');
+                processPKCEFlow();
+                return;
             }
+
+            // 6. NO SE DETECTÓ NINGÚN FLUJO VÁLIDO
+            console.warn('⚠️ No se detectó ningún flujo de autenticación válido');
+            showError('No se encontraron credenciales válidas en la URL.');
+        }
+
+        // ============================================
+        // PROCESAR IMPLICIT FLOW (GOOGLE OAUTH)
+        // ============================================
+        function processImplicitFlow(accessToken, refreshToken, provider, hashParams) {
+            console.log('🔄 Procesando Implicit Flow...');
+            
+            if (DEBUG_MODE) {
+                // Mostrar información de depuración
+                document.getElementById('debug-info').classList.remove('hidden');
+                document.getElementById('tokens-display').innerHTML = `
+                    Provider: <code>${provider || 'google'}</code><br>
+                    Token Type: <code>${hashParams.get('token_type') || 'bearer'}</code><br>
+                    Expires in: <code>${hashParams.get('expires_in') || '3600'}s</code><br>
+                    Access Token: <code>${accessToken.substring(0, 20)}...</code><br>
+                    Refresh Token: <code>${refreshToken.substring(0, 20)}...</code>
+                `;
+            }
+            
+            // Mostrar interfaz de Google OAuth
+            showGoogleOAuth();
+            
+            // Iniciar cuenta regresiva para redirección automática
+            startCountdown();
+        }
+
+        // ============================================
+        // PROCESAR PKCE FLOW (VERIFICACIÓN DE EMAIL)
+        // ============================================
+        function processPKCEFlow() {
+            console.log('🔄 Procesando PKCE Flow...');
+            showSuccess();
+        }
+
+        // ============================================
+        // FUNCIONES DE INTERFAZ
+        // ============================================
+        function showGoogleOAuth() {
+            console.log('👁️ Mostrando interfaz de Google OAuth (Implicit Flow)...');
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('google-oauth').classList.remove('hidden');
         }
 
         function showSuccess() {
+            console.log('👁️ Mostrando éxito (PKCE Flow)...');
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('success').classList.remove('hidden');
-            openApp();
+            setTimeout(openApp, 2000);
         }
 
         function showError(message) {
+            console.error('👁️ Mostrando error:', message);
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('error-message').textContent = message;
             document.getElementById('error').classList.remove('hidden');
         }
 
+        function showFallback() {
+            console.log('👁️ Mostrando fallback...');
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('google-oauth').classList.add('hidden');
+            document.getElementById('fallback').classList.remove('hidden');
+        }
+
+        // ============================================
+        // REDIRECCIÓN A LA APP
+        // ============================================
         function openApp() {
-            // Recopilar todos los parámetros para pasarlos a la app
+            console.log('🚀 Intentando abrir la aplicación...');
+            
+            // Para Implicit Flow, pasamos TODO el hash con los tokens
             const search = window.location.search;
             const hash = window.location.hash;
             
-            // Construir el Deep Link pasando todo lo que recibimos
-            // La app decidirá qué usar (el 'code', el 'access_token', etc.)
-            let deepLink = 'loginpro://verified' + search + hash;
+            // Construir el deep link
+            let deepLink = APP_DEEP_LINK;
+            if (search || hash) {
+                deepLink += search + hash;
+            }
             
-            console.log("Abriendo app con:", deepLink);
+            if (DEBUG_MODE) {
+                console.log('🔗 Deep link completo:', deepLink);
+                console.log('🔗 Deep link (truncado):', deepLink.substring(0, 100) + '...');
+            }
+            
+            // Intentar abrir la app
             window.location.href = deepLink;
+            
+            // Si después de 1 segundo no se abrió, mostrar fallback
+            setTimeout(() => {
+                if (!document.hidden) {
+                    console.log('⚠️ La app no se abrió automáticamente, mostrando fallback...');
+                    showFallback();
+                }
+            }, 1000);
         }
 
-        // Ejecutar al cargar
-        verifyEmail();
+        // ============================================
+        // CUENTA REGRESIVA PARA REDIRECCIÓN AUTOMÁTICA
+        // ============================================
+        function startCountdown() {
+            let seconds = REDIRECT_DELAY;
+            const countdownElement = document.getElementById('countdown');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    openApp();
+                }
+            }, 1000);
+        }
+
+        // ============================================
+        // FUNCIÓN PARA REINTENTAR
+        // ============================================
+        function retryGoogleAuth() {
+            console.log('🔄 Reintentando autenticación...');
+            // Limpiar la URL actual y recargar
+            window.location.href = window.location.origin + window.location.pathname;
+        }
+
+        // ============================================
+        // DETECTAR CUANDO LA APP SE ABRE
+        // ============================================
+        window.addEventListener('blur', function() {
+            console.log('📱 Ventana perdió foco - probablemente la app se abrió');
+            // Ocultar todo después de 0.5 segundos
+            setTimeout(() => {
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: white;">
+                        <h2>¡Redirigiendo a la aplicación! ✅</h2>
+                        <p>Si no se abre automáticamente, cierra esta ventana.</p>
+                    </div>
+                `;
+            }, 500);
+        });
+
+        // ============================================
+        // EJECUTAR AL CARGAR LA PÁGINA
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 Página cargada, iniciando procesamiento...');
+            
+            // Mostrar mensaje de carga específico
+            const loadingMsg = document.getElementById('loading-message');
+            if (window.location.hash.includes('access_token')) {
+                loadingMsg.textContent = 'Procesando tokens de Google OAuth (Implicit Flow)...';
+            } else if (window.location.search.includes('code=')) {
+                loadingMsg.textContent = 'Procesando código de verificación (PKCE Flow)...';
+            }
+            
+            // Iniciar procesamiento
+            processAuth();
+        });
     </script>
 </body>
 </html>

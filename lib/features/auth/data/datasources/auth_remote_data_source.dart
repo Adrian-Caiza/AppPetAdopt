@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> signInWithEmailAndPassword({
@@ -39,10 +40,7 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SupabaseClient supabaseClient;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Pega aquí TU CLIENTE WEB si pruebas en Web, o iOS si pruebas en iOS
-    serverClientId: '432958566682-mpedq2uqesklm28jrcla6rqdakiunccb.apps.googleusercontent.com', 
-  );
+  
 
   AuthRemoteDataSourceImpl(this.supabaseClient);
 
@@ -155,41 +153,36 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserModel> signInWithGoogle() async {
-    try {
-      // 1. Iniciar flujo nativo de Google
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw Exception('Inicio de sesión cancelado por el usuario');
-      }
-
-      // 2. Obtener tokens de autenticación
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final accessToken = googleAuth.accessToken;
-      final idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        throw Exception('No se pudo obtener el ID Token de Google');
-      }
-
-      // 3. Iniciar sesión en Supabase con esos tokens
-      final response = await supabaseClient.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
-      );
-
-      if (response.user == null) {
-        throw Exception('Error al iniciar sesión con Google en Supabase');
-      }
-
-      // 4. (Opcional) Guardar datos extra en la tabla profiles si es usuario nuevo
-      // Esto lo hace tu Trigger de base de datos automáticamente, 
-      // pero el avatar de Google viene en user_metadata['avatar_url']
-
-      return UserModel.fromSupabaseUser(response.user!);
-    } catch (e) {
-      throw Exception('Error en Google Sign-In: $e');
+Future<UserModel> signInWithGoogle() async {
+  try {
+    print('=== INICIANDO GOOGLE SIGN-IN CON SUPABASE ===');
+    
+    // OPCIÓN 1: Usar OAuthProvider.google (si está disponible)
+    await supabaseClient.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'loginpro://auth-callback',
+    );
+    
+    // Esperamos un momento para que se complete el flujo OAuth
+    await Future.delayed(const Duration(seconds: 3));
+    
+    // Verificamos si hay un usuario autenticado
+    final currentUser = supabaseClient.auth.currentUser;
+    
+    if (currentUser == null) {
+      throw Exception('No se pudo iniciar sesión con Google - Usuario nulo');
     }
+    
+    print('Usuario autenticado: ${currentUser.email}');
+    return UserModel.fromSupabaseUser(currentUser);
+    
+  } catch (e, stack) {
+    print('=== ERROR EN GOOGLE SIGN-IN ===');
+    print('Error: $e');
+    print('Stack trace: $stack');
+    throw Exception('Error en Google Sign-In: $e');
   }
 }
+}
+
+
