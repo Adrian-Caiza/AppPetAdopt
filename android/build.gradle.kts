@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Esta línea permite que tu proyecto reconozca los servicios de Google
+        // Nota los paréntesis y las comillas dobles, propios de Kotlin DSL
+        classpath("com.google.gms:google-services:4.4.1")
+    }
+}
 allprojects {
     repositories {
         google()
