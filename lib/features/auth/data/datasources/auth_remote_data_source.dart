@@ -155,77 +155,83 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
 Future<UserModel> signInWithGoogle() async {
   try {
-    print('🚀 Iniciando Google Sign-In (OAuthProvider.google)...');
+    print('=== PRUEBA DE FLUJOS GOOGLE ===');
+    print('1. Probando Implicit Flow primero...');
     
-    // Configuración CORRECTA para Implicit Flow
-    await supabaseClient.auth.signInWithOAuth(
-      OAuthProvider.google, // ✅ Esto funciona en tu versión
-      redirectTo: 'https://web-pet-adopt.netlify.app/verify-email.html',
+    try {
+      return await _tryImplicitFlow();
+    } catch (e) {
+      print('❌ Implicit Flow falló: $e');
+      print('2. Probando PKCE Flow...');
+      return await _tryPKCEFlow();
+    }
+    
+  } catch (e) {
+    print('🔴 Ambos flujos fallaron: $e');
+    throw Exception(
+      'Error con Google Sign-In:\n'
+      '• Verifica las URIs en Google Cloud Console\n'
+      '• Asegúrate de que https://web-pet-adopt.netlify.app/verify-email.html\n'
+      '  esté en "Authorized redirect URIs"'
     );
-    
-    print('✅ Redirigiendo a Google...');
-    print('📱 Con Implicit Flow:');
-    print('   1. Te redirigirá a nuestra página Netlify');
-    print('   2. La página procesará los tokens');
-    print('   3. Te redirigirá de vuelta a la app automáticamente');
-    
-    // Espera inteligente para Implicit Flow
-    return await _waitForImplicitFlow();
-    
-  } on AuthException catch (e) {
-    print('🔴 Error de autenticación: ${e.message}');
-    throw Exception('Error de Google: ${e.message}');
-  } catch (e, stack) {
-    print('🔴 Error inesperado: $e');
-    print('Stack: $stack');
-    throw Exception('Error al conectar con Google: $e');
   }
 }
 
-Future<UserModel> _waitForImplicitFlow() async {
-  print('⏳ Esperando procesamiento de Implicit Flow...');
-  print('   Esto puede tomar hasta 60 segundos');
-  print('   Por favor NO cierres la app');
+Future<UserModel> _tryImplicitFlow() async {
+  print('🔄 Intentando Implicit Flow...');
   
-  const totalWait = 60; // 60 segundos máximo
-  int secondsWaited = 0;
+  await supabaseClient.auth.signInWithOAuth(
+    OAuthProvider.google,
+    redirectTo: 'https://web-pet-adopt.netlify.app/verify-email.html',
+    // Algunas versiones soportan esto para forzar Implicit:
+    // authFlowType: AuthFlowType.implicit,
+  );
   
-  while (secondsWaited < totalWait) {
+  print('✅ Implicit Flow iniciado');
+  print('   Los tokens deberían llegar en el HASH (#)');
+  
+  return await _waitForAuth(30, 'Implicit');
+}
+
+Future<UserModel> _tryPKCEFlow() async {
+  print('🔄 Intentando PKCE Flow...');
+  
+  await supabaseClient.auth.signInWithOAuth(
+    OAuthProvider.google,
+    redirectTo: 'https://web-pet-adopt.netlify.app/oauth-callback.html',
+    // PKCE es más común y confiable
+    // authFlowType: AuthFlowType.pkce,
+  );
+  
+  print('✅ PKCE Flow iniciado');
+  print('   El código debería llegar en ?code=');
+  
+  return await _waitForAuth(40, 'PKCE');
+}
+
+Future<UserModel> _waitForAuth(int seconds, String flowName) async {
+  print('⏳ Esperando $seconds segundos ($flowName)...');
+  
+  for (int i = 0; i < seconds; i++) {
     await Future.delayed(const Duration(seconds: 1));
-    secondsWaited++;
+    final user = supabaseClient.auth.currentUser;
     
-    final currentUser = supabaseClient.auth.currentUser;
-    
-    if (currentUser != null) {
-      print('🎉 ¡AUTENTICACIÓN EXITOSA!');
-      print('   Tiempo: $secondsWaited segundos');
-      print('   Usuario: ${currentUser.email}');
-      print('   ID: ${currentUser.id}');
-      return UserModel.fromSupabaseUser(currentUser);
+    if (user != null) {
+      print('🎉 ¡Autenticado con $flowName!');
+      print('   Email: ${user.email}');
+      print('   Tiempo: ${i + 1} segundos');
+      return UserModel.fromSupabaseUser(user);
     }
     
-    // Mostrar progreso
-    if (secondsWaited % 10 == 0) {
-      print('   ⏳ $secondsWaited/$totalWait segundos...');
-      if (secondsWaited >= 20) {
-        print('   💡 ¿Ya autorizaste con Google en el navegador?');
-        print('   💡 ¿La página te redirigió de vuelta a la app?');
-      }
+    if (i % 10 == 0 && i > 0) {
+      print('   $i/$seconds segundos - ¿Ya autorizaste?');
     }
   }
   
-  print('⚠️ Timeout después de $totalWait segundos');
-  print('   Esto es NORMAL si:');
-  print('   1. No completaste la autorización en el navegador');
-  print('   2. No volviste a la app después de autorizar');
-  print('   3. Hay problemas con los deep links');
-  
   throw Exception(
-    'Por favor:\n'
-    '1. Completa la autorización con Google en el navegador\n'
-    '2. Espera a que te redirija de vuelta a la app\n'
-    '3. Si no se abre automáticamente, vuelve MANUALMENTE\n'
-    '4. Tu sesión se activará automáticamente'
+    'Timeout $flowName.\n'
+    '¿Autorizaste con Google en el navegador?\n'
+    '¿Volviste a la app después de autorizar?'
   );
 }
 }
